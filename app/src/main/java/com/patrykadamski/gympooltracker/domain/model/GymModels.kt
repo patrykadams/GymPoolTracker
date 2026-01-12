@@ -1,3 +1,4 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/domain/model/GymModels.kt
 package com.patrykadamski.gympooltracker.domain.model
 
 /**
@@ -22,7 +23,8 @@ data class GymExercise(
     val id: Long = 0,
     val workoutId: Int,
     val name: String,
-    val sets: List<GymSet> = emptyList()
+    val sets: List<GymSet> = emptyList(),
+    val personalRecord: Double? = null // Added for UI display
 )
 
 /**

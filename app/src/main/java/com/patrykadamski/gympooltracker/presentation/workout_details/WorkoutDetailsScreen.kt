@@ -26,8 +26,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.patrykadamski.gympooltracker.domain.model.ExerciseWithSets
-import com.patrykadamski.gympooltracker.domain.model.SetEntity
+import com.patrykadamski.gympooltracker.domain.model.GymExercise
+import com.patrykadamski.gympooltracker.domain.model.GymSet
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -42,9 +42,8 @@ fun WorkoutDetailsScreen(
     val suggestions by viewModel.exerciseSuggestions.collectAsState()
 
     var showAddExerciseDialog by remember { mutableStateOf(false) }
-    var showSaveRoutineDialog by remember { mutableStateOf(false) } // NEW STATE
+    var showSaveRoutineDialog by remember { mutableStateOf(false) }
 
-    // Handle Save Routine Dialog
     if (showSaveRoutineDialog) {
         SaveRoutineDialog(
             onDismiss = { showSaveRoutineDialog = false },
@@ -76,7 +75,6 @@ fun WorkoutDetailsScreen(
                     }
                 },
                 actions = {
-                    // NEW ACTION BUTTON
                     IconButton(onClick = { showSaveRoutineDialog = true }) {
                         Icon(Icons.Default.Save, contentDescription = "Zapisz jako szablon")
                     }
@@ -112,7 +110,6 @@ fun WorkoutDetailsScreen(
     }
 }
 
-// NEW DIALOG COMPONENT
 @Composable
 fun SaveRoutineDialog(
     onDismiss: () -> Unit,
@@ -176,12 +173,12 @@ fun WorkoutContent(
             ExerciseCard(
                 exercise = exercise,
                 onAddSet = { weight, reps ->
-                    viewModel.addSet(exercise.exerciseId, weight, reps)
+                    viewModel.addSet(exercise.id, weight, reps)
                 },
-                onUpdateSet = { id, r, w -> viewModel.updateSet(id, r, w) },
-                onToggleSet = { id, completed -> viewModel.toggleSetCompletion(id, completed) },
-                onDeleteSet = { id -> viewModel.deleteSet(id) },
-                onDeleteExercise = { viewModel.deleteExercise(exercise.exerciseId) }
+                onUpdateSet = { set, r, w -> viewModel.updateSet(set, r, w) },
+                onToggleSet = { set, completed -> viewModel.toggleSetCompletion(set, completed) },
+                onDeleteSet = { set -> viewModel.deleteSet(set) },
+                onDeleteExercise = { viewModel.deleteExercise(exercise.id) }
             )
         }
     }
@@ -219,11 +216,11 @@ fun WorkoutHeader(details: WorkoutDetails) {
 
 @Composable
 fun ExerciseCard(
-    exercise: ExerciseWithSets,
+    exercise: GymExercise,
     onAddSet: (Double?, String?) -> Unit,
-    onUpdateSet: (Long, String, String) -> Unit,
-    onToggleSet: (Long, Boolean) -> Unit,
-    onDeleteSet: (Long) -> Unit,
+    onUpdateSet: (GymSet, String, String) -> Unit,
+    onToggleSet: (GymSet, Boolean) -> Unit,
+    onDeleteSet: (GymSet) -> Unit,
     onDeleteExercise: () -> Unit
 ) {
     Card(
@@ -240,7 +237,7 @@ fun ExerciseCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = exercise.exerciseName,
+                    text = exercise.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -250,7 +247,7 @@ fun ExerciseCard(
             }
 
             // PR Display
-            if (exercise.personalRecord != null && exercise.personalRecord > 0) {
+            if (exercise.personalRecord != null && exercise.personalRecord > 0.0) {
                 Text(
                     text = "PR: ${exercise.personalRecord} kg",
                     style = MaterialTheme.typography.labelSmall,
@@ -278,9 +275,9 @@ fun ExerciseCard(
                 SetRow(
                     set = set,
                     index = index + 1,
-                    onUpdate = { r, w -> onUpdateSet(set.id, r, w) },
-                    onToggle = { onToggleSet(set.id, it) },
-                    onDelete = { onDeleteSet(set.id) }
+                    onUpdate = { r, w -> onUpdateSet(set, r, w) },
+                    onToggle = { onToggleSet(set, it) },
+                    onDelete = { onDeleteSet(set) }
                 )
             }
 
@@ -302,19 +299,15 @@ fun ExerciseCard(
 
 @Composable
 fun SetRow(
-    set: SetEntity,
+    set: GymSet,
     index: Int,
     onUpdate: (String, String) -> Unit,
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     // Local state for smooth typing before committing to VM
-    var weightText by remember(set.weight) { mutableStateOf(if (set.weight > 0) set.weight.toString() else "") }
+    var weightText by remember(set.weight) { mutableStateOf(if (set.weight > 0.0) set.weight.toString() else "") }
     var repsText by remember(set.reps) { mutableStateOf(set.reps) }
-
-    // Auto-save logic could be added here with LaunchedEffect or onFocusChanged
-    // For simplicity, we save on value change immediately,
-    // but in production, debouncing is better for Room DB.
 
     val backgroundColor = if (set.isCompleted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
 
