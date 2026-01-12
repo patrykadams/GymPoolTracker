@@ -50,7 +50,6 @@ class WorkoutDetailsViewModel @Inject constructor(
             getWorkoutDetailsUseCase(workoutId).collect { details ->
                 if (details != null) {
                     // Fetch PRs for each exercise
-                    // Note: In a real app, this should be optimized to avoid N+1 queries.
                     val exercisesWithPrs = details.exercises.map { exercise ->
                         val pr = getPersonalRecordUseCase(exercise.name).firstOrNull()
                         exercise.copy(personalRecord = pr)
@@ -67,22 +66,37 @@ class WorkoutDetailsViewModel @Inject constructor(
 
     private fun loadExerciseSuggestions() {
         viewModelScope.launch {
-            _exerciseSuggestions.value = getExerciseNamesUseCase()
+            getExerciseNamesUseCase().collect { names ->
+                _exerciseSuggestions.value = names
+            }
         }
     }
 
     fun addExercise(name: String) {
         viewModelScope.launch {
             addExerciseUseCase(workoutId, name)
-            // No need to reload manually if we are collecting the flow in loadWorkoutDetails
         }
     }
 
     fun addSet(exerciseId: Long, previousSetWeight: Double?, previousSetReps: String?) {
         viewModelScope.launch {
+            val currentState = _uiState.value
+            val nextSetNumber = if (currentState is WorkoutDetailsUiState.Success) {
+                val exercise = currentState.details.exercises.find { it.id == exerciseId }
+                (exercise?.sets?.size ?: 0) + 1
+            } else {
+                1
+            }
+
             val weight = previousSetWeight ?: 0.0
             val reps = previousSetReps ?: "0"
-            addSetUseCase(exerciseId, reps, weight)
+
+            addSetUseCase(
+                exerciseId = exerciseId,
+                setNumber = nextSetNumber,
+                reps = reps,
+                weight = weight
+            )
         }
     }
 
@@ -99,7 +113,7 @@ class WorkoutDetailsViewModel @Inject constructor(
 
     fun toggleSetCompletion(set: GymSet, isCompleted: Boolean) {
         viewModelScope.launch {
-            toggleSetCompletionUseCase(set.id, isCompleted)
+            toggleSetCompletionUseCase(set)
         }
     }
 
@@ -111,7 +125,8 @@ class WorkoutDetailsViewModel @Inject constructor(
 
     fun deleteExercise(exerciseId: Long) {
         viewModelScope.launch {
-            deleteExerciseUseCase(exerciseId)
+            // FIX: Pass workoutId to DeleteExerciseUseCase
+            deleteExerciseUseCase(exerciseId, workoutId)
         }
     }
 
