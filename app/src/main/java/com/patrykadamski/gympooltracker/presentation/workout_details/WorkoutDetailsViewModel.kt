@@ -1,30 +1,18 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/presentation/workout_details/WorkoutDetailsViewModel.kt
 package com.patrykadamski.gympooltracker.presentation.workout_details
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.patrykadamski.gympooltracker.domain.model.DefaultExercises
-import com.patrykadamski.gympooltracker.domain.model.GymSet
+import com.patrykadamski.gympooltracker.domain.model.ExerciseWithSets
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
 import com.patrykadamski.gympooltracker.domain.usecase.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class TimerState(
-    val isRunning: Boolean = false,
-    val timeLeft: Int = 0,
-    val totalTime: Int = 1
-)
 
 @HiltViewModel
 class WorkoutDetailsViewModel @Inject constructor(
@@ -37,151 +25,103 @@ class WorkoutDetailsViewModel @Inject constructor(
     private val deleteExerciseUseCase: DeleteExerciseUseCase,
     private val getExerciseNamesUseCase: GetExerciseNamesUseCase,
     private val getPersonalRecordUseCase: GetPersonalRecordUseCase,
+    private val saveWorkoutAsRoutineUseCase: SaveWorkoutAsRoutineUseCase, // NEW
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val workoutId: Int = checkNotNull(savedStateHandle["workoutId"])
 
-    val uiState: StateFlow<WorkoutDetails?> = getWorkoutDetailsUseCase(workoutId)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
+    private val _uiState = MutableStateFlow<WorkoutDetailsUiState>(WorkoutDetailsUiState.Loading)
+    val uiState: StateFlow<WorkoutDetailsUiState> = _uiState.asStateFlow()
 
-    /**
-     * Combined list of exercises:
-     * 1. Exercises from history (DB)
-     * 2. Default built-in exercises
-     * Filtered for uniqueness and sorted alphabetically.
-     */
-    val exerciseHistory: StateFlow<List<String>> = combine(
-        getExerciseNamesUseCase(),
-        flowOf(DefaultExercises.all)
-    ) { history, defaults ->
-        (history + defaults).distinct().sorted()
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = DefaultExercises.all // Start with defaults immediately
-    )
-
-    // --- Personal Records Cache ---
-    private val _personalRecords = MutableStateFlow<Map<Long, Double?>>(emptyMap())
-    val personalRecords = _personalRecords.asStateFlow()
-
-    // --- Timer State ---
-    private val _timerState = MutableStateFlow(TimerState())
-    val timerState = _timerState.asStateFlow()
-    private var timerJob: Job? = null
+    private val _exerciseSuggestions = MutableStateFlow<List<String>>(emptyList())
+    val exerciseSuggestions: StateFlow<List<String>> = _exerciseSuggestions.asStateFlow()
 
     init {
-        // Observe exercises to fetch their PRs automatically
+        loadWorkoutDetails()
+        loadExerciseSuggestions()
+    }
+
+    private fun loadWorkoutDetails() {
         viewModelScope.launch {
-            uiState.collect { details ->
-                details?.exercises?.forEach { exercise ->
-                    loadPersonalRecord(exercise.id, exercise.name)
+            val details = getWorkoutDetailsUseCase(workoutId)
+            if (details != null) {
+                // Fetch PRs for each exercise
+                val exercisesWithPrs = details.exercises.map { exercise ->
+                    val pr = getPersonalRecordUseCase(exercise.exerciseName)
+                    exercise.copy(personalRecord = pr)
                 }
-            }
-        }
-    }
-
-    private fun loadPersonalRecord(exerciseId: Long, name: String) {
-        viewModelScope.launch {
-            getPersonalRecordUseCase(name).collect { pr ->
-                _personalRecords.value = _personalRecords.value.toMutableMap().apply {
-                    put(exerciseId, pr)
-                }
-            }
-        }
-    }
-
-    // --- Actions ---
-
-    fun addExercise(name: String) {
-        viewModelScope.launch { addExerciseUseCase(workoutId, name) }
-    }
-
-    fun addSet(exerciseId: Long, currentSets: List<GymSet>) {
-        viewModelScope.launch {
-            val lastSet = currentSets.lastOrNull()
-            val newSetNumber = currentSets.size + 1
-
-            if (lastSet != null) {
-                addSetUseCase(
-                    exerciseId = exerciseId,
-                    setNumber = newSetNumber,
-                    reps = lastSet.reps,
-                    weight = lastSet.weight,
-                    restSeconds = lastSet.restSeconds
+                _uiState.value = WorkoutDetailsUiState.Success(
+                    details = details.copy(exercises = exercisesWithPrs)
                 )
             } else {
-                addSetUseCase(exerciseId = exerciseId, setNumber = newSetNumber)
+                _uiState.value = WorkoutDetailsUiState.Error("Workout not found")
             }
         }
     }
 
-    fun updateSet(set: GymSet, reps: String, weight: Double, rpe: Double) {
+    private fun loadExerciseSuggestions() {
         viewModelScope.launch {
-            val updatedSet = set.copy(reps = reps, weight = weight, rpe = rpe)
-            updateSetUseCase(updatedSet)
+            _exerciseSuggestions.value = getExerciseNamesUseCase()
         }
     }
 
-    fun updateSetRestTime(set: GymSet, newRestSeconds: Int) {
+    fun addExercise(name: String) {
         viewModelScope.launch {
-            val updatedSet = set.copy(restSeconds = newRestSeconds)
-            updateSetUseCase(updatedSet)
+            addExerciseUseCase(workoutId, name)
+            loadWorkoutDetails()
         }
     }
 
-    fun toggleSetCompleted(set: GymSet) {
+    fun addSet(exerciseId: Long, previousSetWeight: Double?, previousSetReps: String?) {
         viewModelScope.launch {
-            if (!set.isCompleted) {
-                startTimer(set.restSeconds)
-            }
-            toggleSetCompletionUseCase(set)
+            val weight = previousSetWeight ?: 0.0
+            val reps = previousSetReps ?: "0"
+            addSetUseCase(exerciseId, reps, weight)
+            loadWorkoutDetails()
         }
     }
 
-    fun deleteSet(set: GymSet) {
-        viewModelScope.launch { deleteSetUseCase(set) }
+    fun updateSet(setId: Long, reps: String, weight: String) {
+        viewModelScope.launch {
+            val weightValue = weight.toDoubleOrNull() ?: 0.0
+            updateSetUseCase(setId, reps, weightValue)
+            loadWorkoutDetails()
+        }
+    }
+
+    fun toggleSetCompletion(setId: Long, isCompleted: Boolean) {
+        viewModelScope.launch {
+            toggleSetCompletionUseCase(setId, isCompleted)
+            loadWorkoutDetails()
+        }
+    }
+
+    fun deleteSet(setId: Long) {
+        viewModelScope.launch {
+            deleteSetUseCase(setId)
+            loadWorkoutDetails()
+        }
     }
 
     fun deleteExercise(exerciseId: Long) {
-        viewModelScope.launch { deleteExerciseUseCase(exerciseId, workoutId) }
-    }
-
-    // --- Timer Logic ---
-
-    private fun startTimer(seconds: Int) {
-        stopTimer()
-        if (seconds <= 0) return
-
-        timerJob = viewModelScope.launch {
-            _timerState.value = TimerState(isRunning = true, timeLeft = seconds, totalTime = seconds)
-            while (_timerState.value.timeLeft > 0) {
-                delay(1000)
-                _timerState.value = _timerState.value.copy(
-                    timeLeft = _timerState.value.timeLeft - 1
-                )
-            }
-            stopTimer()
+        viewModelScope.launch {
+            deleteExerciseUseCase(exerciseId)
+            loadWorkoutDetails()
         }
     }
 
-    fun stopTimer() {
-        timerJob?.cancel()
-        _timerState.value = TimerState(isRunning = false)
-    }
-
-    fun addTime(seconds: Int) {
-        val current = _timerState.value
-        if (current.isRunning) {
-            _timerState.value = current.copy(
-                timeLeft = current.timeLeft + seconds,
-                totalTime = current.totalTime + seconds
-            )
+    // NEW FUNCTION
+    fun saveAsRoutine(name: String) {
+        viewModelScope.launch {
+            saveWorkoutAsRoutineUseCase(workoutId, name)
+            // Optionally: Show a success message (One-time event)
         }
     }
+}
+
+sealed class WorkoutDetailsUiState {
+    data object Loading : WorkoutDetailsUiState()
+    data class Success(val details: WorkoutDetails) : WorkoutDetailsUiState()
+    data class Error(val message: String) : WorkoutDetailsUiState()
 }

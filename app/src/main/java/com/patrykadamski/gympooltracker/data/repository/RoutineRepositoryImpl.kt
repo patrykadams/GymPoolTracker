@@ -2,6 +2,8 @@
 package com.patrykadamski.gympooltracker.data.repository
 
 import com.patrykadamski.gympooltracker.data.local.RoutineDao
+import com.patrykadamski.gympooltracker.data.local.RoutineEntity
+import com.patrykadamski.gympooltracker.data.local.RoutineExerciseEntity
 import com.patrykadamski.gympooltracker.domain.model.Routine
 import com.patrykadamski.gympooltracker.domain.model.RoutineExercise
 import com.patrykadamski.gympooltracker.domain.repository.RoutineRepository
@@ -32,5 +34,29 @@ class RoutineRepositoryImpl(
                 )
             }
         }
+    }
+
+    override suspend fun createRoutine(routine: Routine): Long {
+        // 1. Insert Routine Entity
+        val routineEntity = RoutineEntity(
+            name = routine.name,
+            description = routine.description
+        )
+        val routineId = dao.insertRoutine(routineEntity)
+
+        // 2. Insert Exercise Entities linked to routineId
+        val exerciseEntities = routine.exercises.map { ex ->
+            RoutineExerciseEntity(
+                routineId = routineId,
+                name = ex.name,
+                sets = ex.sets,
+                reps = ex.reps,
+                targetRpe = ex.targetRpe,
+                orderIndex = ex.orderIndex
+            )
+        }
+        dao.insertExercises(exerciseEntities)
+
+        return routineId
     }
 }

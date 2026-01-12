@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface RoutineRepository {
     fun getRoutines(): Flow<List<Routine>>
+    suspend fun createRoutine(routine: Routine): Long
 }

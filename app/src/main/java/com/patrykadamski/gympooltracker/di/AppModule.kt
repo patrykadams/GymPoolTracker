@@ -59,14 +59,8 @@ object AppModule {
                     super.onCreate(db)
                     // Seed Routines on fresh install/create
                     CoroutineScope(Dispatchers.IO).launch {
-                        // Use a separate DB instance or raw SQL to seed if needed,
-                        // but since we are in onCreate, we can't easily access DAOs yet via Hilt.
-                        // We will execute raw SQL for simplicity here or let the user add them.
-                        // For this task, I will insert via SQL to ensure "Routine A" is available.
-
                         // Insert Routine A
                         db.execSQL("INSERT INTO routines (name, description) VALUES ('Full Body A', 'Przysiad / Wyciskanie / Wiosłowanie')")
-                        // Get ID (assuming 1 for first insert in clean DB)
                         db.execSQL("INSERT INTO routine_exercises (routineId, name, sets, reps, targetRpe, orderIndex) VALUES (1, 'Back Squat', 3, '5', '8', 1)")
                         db.execSQL("INSERT INTO routine_exercises (routineId, name, sets, reps, targetRpe, orderIndex) VALUES (1, 'Bench Press', 3, '5', '9', 2)")
                         db.execSQL("INSERT INTO routine_exercises (routineId, name, sets, reps, targetRpe, orderIndex) VALUES (1, 'Barbell Row', 3, '8', '8', 3)")
@@ -195,7 +189,7 @@ object AppModule {
         return GetPersonalRecordUseCase(repository)
     }
 
-    // --- NEW: Routines UseCases ---
+    // --- Routines UseCases ---
     @Provides
     @Singleton
     fun provideGetRoutinesUseCase(repository: RoutineRepository): GetRoutinesUseCase {
@@ -206,5 +200,14 @@ object AppModule {
     @Singleton
     fun provideCreateWorkoutFromRoutineUseCase(repository: WorkoutRepository): CreateWorkoutFromRoutineUseCase {
         return CreateWorkoutFromRoutineUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSaveWorkoutAsRoutineUseCase(
+        workoutRepository: WorkoutRepository,
+        routineRepository: RoutineRepository
+    ): SaveWorkoutAsRoutineUseCase {
+        return SaveWorkoutAsRoutineUseCase(workoutRepository, routineRepository)
     }
 }
