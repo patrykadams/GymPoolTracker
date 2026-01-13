@@ -1,3 +1,4 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/data/local/WorkoutTypeDao.kt
 package com.patrykadamski.gympooltracker.data.local
 
 import androidx.room.Dao
@@ -8,10 +9,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WorkoutTypeDao {
-    @Query("SELECT * FROM workout_types")
-    fun getAllTypes(): Flow<List<WorkoutTypeEntity>>
 
+    // FIX: Added @Query annotation here (this was likely missing)
+    @Query("SELECT * FROM workout_types")
+    fun getAllWorkoutTypes(): Flow<List<WorkoutTypeEntity>>
+
+    // Helper to pre-populate data if needed
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(types: List<WorkoutTypeEntity>)
-    fun getAllWorkoutTypes()
 }
