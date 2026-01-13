@@ -7,8 +7,6 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.patrykadamski.gympooltracker.data.local.GymDatabase
 import com.patrykadamski.gympooltracker.data.local.RoutineDao
-import com.patrykadamski.gympooltracker.data.local.RoutineEntity
-import com.patrykadamski.gympooltracker.data.local.RoutineExerciseEntity
 import com.patrykadamski.gympooltracker.data.local.WorkoutDao
 import com.patrykadamski.gympooltracker.data.local.WorkoutTypeDao
 import com.patrykadamski.gympooltracker.data.repository.RoutineRepositoryImpl
@@ -187,6 +185,12 @@ object AppModule {
     @Singleton
     fun provideGetPersonalRecordUseCase(repository: WorkoutRepository): GetPersonalRecordUseCase {
         return GetPersonalRecordUseCase(repository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetLastSetForExerciseUseCase(repository: WorkoutRepository): GetLastSetForExerciseUseCase {
+        return GetLastSetForExerciseUseCase(repository)
     }
 
     // --- Routines UseCases ---

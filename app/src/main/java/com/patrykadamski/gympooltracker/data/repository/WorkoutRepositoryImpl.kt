@@ -1,10 +1,11 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/data/repository/WorkoutRepositoryImpl.kt
 package com.patrykadamski.gympooltracker.data.repository
 
 import com.patrykadamski.gympooltracker.data.local.ExerciseEntity
 import com.patrykadamski.gympooltracker.data.local.SetEntity
 import com.patrykadamski.gympooltracker.data.local.WorkoutDao
 import com.patrykadamski.gympooltracker.data.local.WorkoutTypeDao
-import com.patrykadamski.gympooltracker.domain.model.GymExercise
+import com.patrykadamski.gympooltracker.data.mapper.WorkoutMapper
 import com.patrykadamski.gympooltracker.domain.model.GymSet
 import com.patrykadamski.gympooltracker.domain.model.Workout
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
@@ -18,70 +19,59 @@ class WorkoutRepositoryImpl(
     private val workoutTypeDao: WorkoutTypeDao
 ) : WorkoutRepository {
 
-    override fun getWorkouts(): Flow<List<Workout>> = dao.getWorkouts()
+    override fun getWorkouts(): Flow<List<Workout>> {
+        return dao.getAllWorkouts().map { entities ->
+            entities.map { WorkoutMapper.mapEntityToDomain(it) }
+        }
+    }
 
-    override suspend fun getWorkoutById(id: Int): Workout? = dao.getWorkoutById(id)
+    override suspend fun getWorkoutById(id: Int): Workout? {
+        val entity = dao.getWorkoutById(id) ?: return null
+        return WorkoutMapper.mapEntityToDomain(entity)
+    }
+
+    override fun getWorkoutDetails(workoutId: Int): Flow<WorkoutDetails?> {
+        return dao.getWorkoutWithExercises(workoutId).map { relation ->
+            relation?.let { WorkoutMapper.mapRelationToDetails(it) }
+        }
+    }
 
     override suspend fun insertWorkout(workout: Workout): Long {
-        return dao.insertWorkout(workout)
+        val entity = WorkoutMapper.mapDomainToEntity(workout)
+        return dao.insertWorkout(entity)
     }
 
     override suspend fun deleteWorkout(workout: Workout) {
-        dao.deleteWorkout(workout)
+        val entity = WorkoutMapper.mapDomainToEntity(workout)
+        dao.deleteWorkout(entity)
     }
 
     override fun getWorkoutTypes(): Flow<List<WorkoutType>> {
-        return workoutTypeDao.getAllTypes().map { entities ->
-            entities.map { WorkoutType(it.id, it.name, it.caloriesPerMinute, it.iconName) }
+        return workoutTypeDao.getAllWorkoutTypes().map { entities ->
+            entities.map { WorkoutMapper.mapTypeEntityToDomain(it) }
         }
     }
 
     override fun getExerciseNames(): Flow<List<String>> {
-        return dao.getExerciseNames()
+        return dao.getAllExerciseNames()
     }
 
-    // --- NEW: Personal Record Implementation ---
     override fun getPersonalRecord(exerciseName: String): Flow<Double?> {
         return dao.getPersonalRecord(exerciseName)
     }
 
-    override fun getWorkoutDetails(workoutId: Int): Flow<WorkoutDetails?> {
-        return dao.getWorkoutDetails(workoutId).map { relation ->
-            relation?.let {
-                WorkoutDetails(
-                    workout = it.workout,
-                    exercises = it.exercises.map { exWithSets ->
-                        GymExercise(
-                            id = exWithSets.exercise.id,
-                            workoutId = exWithSets.exercise.workoutId,
-                            name = exWithSets.exercise.name,
-                            sets = exWithSets.sets.map { s ->
-                                GymSet(
-                                    id = s.id,
-                                    exerciseId = s.exerciseId,
-                                    setNumber = s.setNumber,
-                                    reps = s.reps,
-                                    weight = s.weight,
-                                    rpe = s.rpe,
-                                    restSeconds = s.restSeconds,
-                                    isCompleted = s.isCompleted
-                                )
-                            }.sortedBy { set -> set.setNumber }
-                        )
-                    }.sortedBy { ex -> ex.id }
-                )
-            }
-        }
+    override suspend fun getLastSetForExercise(exerciseName: String): GymSet? {
+        val entity = dao.getLastSetForExercise(exerciseName) ?: return null
+        return WorkoutMapper.mapSetEntityToDomain(entity)
     }
 
     override suspend fun addExercise(workoutId: Int, name: String): Long {
-        val entity = ExerciseEntity(workoutId = workoutId, name = name, orderIndex = 0)
+        val entity = ExerciseEntity(workoutId = workoutId, name = name)
         return dao.insertExercise(entity)
     }
 
     override suspend fun deleteExercise(exerciseId: Long, workoutId: Int) {
-        val entity = ExerciseEntity(id = exerciseId, workoutId = workoutId, name = "", orderIndex = 0)
-        dao.deleteExercise(entity)
+        dao.deleteExercise(exerciseId)
     }
 
     override suspend fun addSet(
@@ -91,43 +81,24 @@ class WorkoutRepositoryImpl(
         weight: Double,
         restSeconds: Int
     ): Long {
-        val entity = SetEntity(
+        val setEntity = SetEntity(
             exerciseId = exerciseId,
             setNumber = setNumber,
             reps = reps,
             weight = weight,
-            rpe = 8.0,
             restSeconds = restSeconds,
             isCompleted = false
         )
-        return dao.insertSet(entity)
+        return dao.insertSet(setEntity)
     }
 
     override suspend fun updateSet(set: GymSet) {
-        val entity = SetEntity(
-            id = set.id,
-            exerciseId = set.exerciseId,
-            setNumber = set.setNumber,
-            reps = set.reps,
-            weight = set.weight,
-            rpe = set.rpe,
-            restSeconds = set.restSeconds,
-            isCompleted = set.isCompleted
-        )
+        val entity = WorkoutMapper.mapSetDomainToEntity(set)
         dao.updateSet(entity)
     }
 
     override suspend fun deleteSet(set: GymSet) {
-        val entity = SetEntity(
-            id = set.id,
-            exerciseId = set.exerciseId,
-            setNumber = set.setNumber,
-            reps = set.reps,
-            weight = set.weight,
-            rpe = set.rpe,
-            restSeconds = set.restSeconds,
-            isCompleted = set.isCompleted
-        )
+        val entity = WorkoutMapper.mapSetDomainToEntity(set)
         dao.deleteSet(entity)
     }
 }

@@ -27,6 +27,7 @@ class WorkoutDetailsViewModel @Inject constructor(
     private val deleteExerciseUseCase: DeleteExerciseUseCase,
     private val getExerciseNamesUseCase: GetExerciseNamesUseCase,
     private val getPersonalRecordUseCase: GetPersonalRecordUseCase,
+    private val getLastSetForExerciseUseCase: GetLastSetForExerciseUseCase, // NEW
     private val saveWorkoutAsRoutineUseCase: SaveWorkoutAsRoutineUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -81,21 +82,34 @@ class WorkoutDetailsViewModel @Inject constructor(
     fun addSet(exerciseId: Long, previousSetWeight: Double?, previousSetReps: String?) {
         viewModelScope.launch {
             val currentState = _uiState.value
-            val nextSetNumber = if (currentState is WorkoutDetailsUiState.Success) {
-                val exercise = currentState.details.exercises.find { it.id == exerciseId }
-                (exercise?.sets?.size ?: 0) + 1
-            } else {
-                1
-            }
+            val currentExercise = if (currentState is WorkoutDetailsUiState.Success) {
+                currentState.details.exercises.find { it.id == exerciseId }
+            } else null
 
-            val weight = previousSetWeight ?: 0.0
-            val reps = previousSetReps ?: "0"
+            val nextSetNumber = (currentExercise?.sets?.size ?: 0) + 1
+
+            // SMART LOAD LOGIC:
+            // 1. Try to use data from the previous set in the CURRENT workout.
+            // 2. If null/zero, fetch the last set from HISTORY (previous workouts).
+            // 3. Fallback to default 0.0 / "0".
+
+            var suggestedWeight = previousSetWeight ?: 0.0
+            var suggestedReps = previousSetReps ?: "0"
+
+            if (suggestedWeight == 0.0 && currentExercise != null) {
+                // If no weight in current session, look into history
+                val historySet = getLastSetForExerciseUseCase(currentExercise.name)
+                if (historySet != null) {
+                    suggestedWeight = historySet.weight
+                    suggestedReps = historySet.reps
+                }
+            }
 
             addSetUseCase(
                 exerciseId = exerciseId,
                 setNumber = nextSetNumber,
-                reps = reps,
-                weight = weight
+                reps = suggestedReps,
+                weight = suggestedWeight
             )
         }
     }
@@ -125,7 +139,6 @@ class WorkoutDetailsViewModel @Inject constructor(
 
     fun deleteExercise(exerciseId: Long) {
         viewModelScope.launch {
-            // FIX: Pass workoutId to DeleteExerciseUseCase
             deleteExerciseUseCase(exerciseId, workoutId)
         }
     }

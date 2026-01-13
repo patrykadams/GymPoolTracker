@@ -1,3 +1,4 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/domain/repository/WorkoutRepository.kt
 package com.patrykadamski.gympooltracker.domain.repository
 
 import com.patrykadamski.gympooltracker.domain.model.GymSet
@@ -21,8 +22,11 @@ interface WorkoutRepository {
 
     fun getExerciseNames(): Flow<List<String>>
 
-    // --- NEW: Personal Record ---
+    // --- Personal Record & History ---
     fun getPersonalRecord(exerciseName: String): Flow<Double?>
+
+    // NEW: Get last set for suggestion
+    suspend fun getLastSetForExercise(exerciseName: String): GymSet?
 
     // --- Exercise and Set Management ---
 
