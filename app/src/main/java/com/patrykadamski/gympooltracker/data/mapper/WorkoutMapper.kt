@@ -51,7 +51,7 @@ object WorkoutMapper {
             setNumber = entity.setNumber,
             reps = entity.reps,
             weight = entity.weight,
-            rpe = 0.0, // Default value as Entity might not have RPE yet
+            rpe = entity.rpe, // FIX: Use value from Entity
             restSeconds = entity.restSeconds,
             isCompleted = entity.isCompleted
         )
@@ -64,6 +64,7 @@ object WorkoutMapper {
             setNumber = domain.setNumber,
             reps = domain.reps,
             weight = domain.weight,
+            rpe = domain.rpe, // FIX: Pass RPE to Entity constructor
             restSeconds = domain.restSeconds,
             isCompleted = domain.isCompleted
         )
@@ -78,7 +79,7 @@ object WorkoutMapper {
                     workoutId = exerciseWithSets.exercise.workoutId,
                     name = exerciseWithSets.exercise.name,
                     sets = exerciseWithSets.sets.map { mapSetEntityToDomain(it) },
-                    personalRecord = null // Will be populated by ViewModel
+                    personalRecord = null
                 )
             }
         )
