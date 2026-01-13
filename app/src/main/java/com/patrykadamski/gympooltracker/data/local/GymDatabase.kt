@@ -4,19 +4,26 @@ package com.patrykadamski.gympooltracker.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.patrykadamski.gympooltracker.domain.model.Workout
 
-// FIX: Added WorkoutEntity, RoutineEntity, RoutineExerciseEntity to the list
+// FIX: Explicit imports to force IDE to recognize files
+import com.patrykadamski.gympooltracker.data.local.WorkoutEntity
+import com.patrykadamski.gympooltracker.data.local.WorkoutTypeEntity
+import com.patrykadamski.gympooltracker.data.local.ExerciseEntity
+import com.patrykadamski.gympooltracker.data.local.SetEntity
+import com.patrykadamski.gympooltracker.data.local.RoutineEntity
+import com.patrykadamski.gympooltracker.data.local.RoutineExerciseEntity
+import com.patrykadamski.gympooltracker.data.local.RoutineDao
+
 @Database(
     entities = [
-        WorkoutEntity::class, // Replaces Workout::class as the DB Entity
+        WorkoutEntity::class,
         WorkoutTypeEntity::class,
         ExerciseEntity::class,
         SetEntity::class,
         RoutineEntity::class,
         RoutineExerciseEntity::class
     ],
-    version = 4, // Bumped version to include new tables
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -24,7 +31,7 @@ abstract class GymDatabase : RoomDatabase() {
 
     abstract val dao: WorkoutDao
     abstract val workoutTypeDao: WorkoutTypeDao
-    abstract val routineDao: RoutineDao // Ensure this is accessible
+    abstract val routineDao: RoutineDao
 
     companion object {
         const val DATABASE_NAME = "workout_db"

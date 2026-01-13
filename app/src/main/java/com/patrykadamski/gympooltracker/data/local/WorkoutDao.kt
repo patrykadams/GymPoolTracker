@@ -8,14 +8,13 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.patrykadamski.gympooltracker.domain.model.Workout
-import com.patrykadamski.gympooltracker.domain.model.WorkoutType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WorkoutDao {
 
     // --- Workouts ---
+    // Returns Entity objects, not Domain models.
     @Query("SELECT * FROM workout_table ORDER BY date DESC")
     fun getAllWorkouts(): Flow<List<WorkoutEntity>>
 
@@ -67,7 +66,7 @@ interface WorkoutDao {
     """)
     fun getPersonalRecord(exerciseName: String): Flow<Double?>
 
-    // NEW: Get the very last performed set for a specific exercise name
+    // Get the very last performed set for a specific exercise name
     // Joins sets -> exercises -> workouts to sort by workout date descending
     @Query("""
         SELECT s.* FROM sets s

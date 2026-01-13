@@ -1,16 +1,17 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/domain/model/Workout.kt
 package com.patrykadamski.gympooltracker.domain.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
-@Entity(tableName = "workout_table") // <--- TO JEST KLUCZOWA POPRAWKA
+/**
+ * Domain model representing a workout session.
+ * This class is independent of the database implementation (Room).
+ */
 data class Workout(
-    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val type: String,          // np. "Siłownia", "Basen"
-    val durationMinutes: Int,
-    val caloriesBurned: Int,
-    val date: LocalDateTime,
-    val notes: String = ""
+    val type: String,          // e.g., "Gym" or "Pool"
+    val durationMinutes: Int,  // Duration of the session
+    val caloriesBurned: Int,   // Estimated calories burned
+    val date: LocalDateTime,   // Date and time of the workout
+    val notes: String = ""     // User notes
 )
