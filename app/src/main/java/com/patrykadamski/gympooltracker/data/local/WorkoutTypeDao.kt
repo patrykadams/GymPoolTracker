@@ -13,4 +13,5 @@ interface WorkoutTypeDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(types: List<WorkoutTypeEntity>)
+    fun getAllWorkoutTypes()
 }

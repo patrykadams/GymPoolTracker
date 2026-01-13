@@ -5,14 +5,16 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-// FIX: Explicit imports to force IDE to recognize files
 import com.patrykadamski.gympooltracker.data.local.WorkoutEntity
 import com.patrykadamski.gympooltracker.data.local.WorkoutTypeEntity
 import com.patrykadamski.gympooltracker.data.local.ExerciseEntity
 import com.patrykadamski.gympooltracker.data.local.SetEntity
 import com.patrykadamski.gympooltracker.data.local.RoutineEntity
 import com.patrykadamski.gympooltracker.data.local.RoutineExerciseEntity
+
 import com.patrykadamski.gympooltracker.data.local.RoutineDao
+import com.patrykadamski.gympooltracker.data.local.WorkoutDao
+import com.patrykadamski.gympooltracker.data.local.WorkoutTypeDao
 
 @Database(
     entities = [
@@ -31,6 +33,7 @@ abstract class GymDatabase : RoomDatabase() {
 
     abstract val dao: WorkoutDao
     abstract val workoutTypeDao: WorkoutTypeDao
+
     abstract val routineDao: RoutineDao
 
     companion object {

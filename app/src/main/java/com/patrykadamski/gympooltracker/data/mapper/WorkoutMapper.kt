@@ -13,7 +13,7 @@ import com.patrykadamski.gympooltracker.domain.model.WorkoutType
 
 object WorkoutMapper {
 
-    fun mapEntityToDomain(entity: WorkoutEntity): Workout {
+    fun mapEntityToDomain(entity: Workout): Workout {
         return Workout(
             id = entity.id,
             type = entity.type,

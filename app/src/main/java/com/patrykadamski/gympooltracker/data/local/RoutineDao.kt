@@ -10,7 +10,6 @@ import androidx.room.Relation
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
-// TO DEFINICJA JEST TUTAJ I TYLKO TUTAJ:
 data class RoutineWithExercises(
     @Embedded val routine: RoutineEntity,
     @Relation(
