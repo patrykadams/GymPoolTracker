@@ -32,9 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.patrykadamski.gympooltracker.data.local.RoutineWithExercises
 import com.patrykadamski.gympooltracker.domain.model.Workout
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+
+// Removed unused imports regarding Date formatting to avoid errors
 
 @Composable
 fun HomeScreen(
@@ -42,7 +41,6 @@ fun HomeScreen(
     onNavigateToCreateWorkout: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    // FIX: Collect flows separately instead of using 'uiState'
     val recentWorkouts by viewModel.recentWorkouts.collectAsState()
     val routines by viewModel.routines.collectAsState()
 
@@ -137,7 +135,6 @@ fun HomeRoutineItem(
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Note: Accessing .routine.name because item is RoutineWithExercises
             Text(
                 text = item.routine.name,
                 style = MaterialTheme.typography.titleSmall
@@ -171,11 +168,12 @@ fun HomeWorkoutItem(
         ) {
             Column {
                 Text(
-                    text = workout.type.name,
+                    text = workout.type,
                     style = MaterialTheme.typography.titleSmall
                 )
+                // FIX: Simply display the date as String to avoid Type Mismatch
                 Text(
-                    text = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(workout.date)),
+                    text = workout.date.toString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
