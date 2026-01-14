@@ -7,12 +7,10 @@ import com.patrykadamski.gympooltracker.domain.model.Workout
 import com.patrykadamski.gympooltracker.domain.model.WorkoutType
 import com.patrykadamski.gympooltracker.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,13 +18,13 @@ class AddWorkoutViewModel @Inject constructor(
     private val repository: WorkoutRepository
 ) : ViewModel() {
 
-    // Helper state to hold available workout types (e.g., Strength, Cardio, Swimming)
-    // Ideally, this should come from a database, but for now, we can hardcode or fetch if available.
+    // Helper state to hold available workout types.
+    // FIX: Added 'caloriesPerMinute' parameter to match the data class definition.
     val workoutTypes: StateFlow<List<WorkoutType>> = kotlinx.coroutines.flow.flowOf(
         listOf(
-            WorkoutType(id = 1, name = "Strength", iconName = "dumbbell"),
-            WorkoutType(id = 2, name = "Cardio", iconName = "run"),
-            WorkoutType(id = 3, name = "Swimming", iconName = "pool")
+            WorkoutType(id = 1, name = "Strength", iconName = "dumbbell", caloriesPerMinute = 5),
+            WorkoutType(id = 2, name = "Cardio", iconName = "run", caloriesPerMinute = 8),
+            WorkoutType(id = 3, name = "Swimming", iconName = "pool", caloriesPerMinute = 10)
         )
     ).stateIn(
         scope = viewModelScope,
