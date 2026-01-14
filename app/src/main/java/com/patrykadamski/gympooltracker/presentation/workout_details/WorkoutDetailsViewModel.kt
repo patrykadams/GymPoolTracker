@@ -4,154 +4,102 @@ package com.patrykadamski.gympooltracker.presentation.workout_details
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.patrykadamski.gympooltracker.domain.model.GymExercise
 import com.patrykadamski.gympooltracker.domain.model.GymSet
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
-import com.patrykadamski.gympooltracker.domain.usecase.*
+import com.patrykadamski.gympooltracker.domain.repository.WorkoutRepository
+import com.patrykadamski.gympooltracker.domain.usecase.SaveWorkoutAsRoutineUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class WorkoutDetailsViewModel @Inject constructor(
-    private val getWorkoutDetailsUseCase: GetWorkoutDetailsUseCase,
-    private val addExerciseUseCase: AddExerciseUseCase,
-    private val addSetUseCase: AddSetUseCase,
-    private val updateSetUseCase: UpdateSetUseCase,
-    private val toggleSetCompletionUseCase: ToggleSetCompletionUseCase,
-    private val deleteSetUseCase: DeleteSetUseCase,
-    private val deleteExerciseUseCase: DeleteExerciseUseCase,
-    private val getExerciseNamesUseCase: GetExerciseNamesUseCase,
-    private val getPersonalRecordUseCase: GetPersonalRecordUseCase,
-    private val getLastSetForExerciseUseCase: GetLastSetForExerciseUseCase, // NEW
+    private val repository: WorkoutRepository,
     private val saveWorkoutAsRoutineUseCase: SaveWorkoutAsRoutineUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    // Retrieve workoutId from Navigation Arguments
     private val workoutId: Int = checkNotNull(savedStateHandle["workoutId"])
 
-    private val _uiState = MutableStateFlow<WorkoutDetailsUiState>(WorkoutDetailsUiState.Loading)
-    val uiState: StateFlow<WorkoutDetailsUiState> = _uiState.asStateFlow()
+    // Internal mutable state for specific UI flags (like showing dialogs)
+    private val _uiState = MutableStateFlow(WorkoutDetailsUiState())
+    val uiState = _uiState.asStateFlow()
 
-    private val _exerciseSuggestions = MutableStateFlow<List<String>>(emptyList())
-    val exerciseSuggestions: StateFlow<List<String>> = _exerciseSuggestions.asStateFlow()
-
-    init {
-        loadWorkoutDetails()
-        loadExerciseSuggestions()
-    }
-
-    private fun loadWorkoutDetails() {
-        viewModelScope.launch {
-            // Collect the flow to get the latest data
-            getWorkoutDetailsUseCase(workoutId).collect { details ->
-                if (details != null) {
-                    // Fetch PRs for each exercise
-                    val exercisesWithPrs = details.exercises.map { exercise ->
-                        val pr = getPersonalRecordUseCase(exercise.name).firstOrNull()
-                        exercise.copy(personalRecord = pr)
-                    }
-                    _uiState.value = WorkoutDetailsUiState.Success(
-                        details = details.copy(exercises = exercisesWithPrs)
-                    )
-                } else {
-                    _uiState.value = WorkoutDetailsUiState.Error("Workout not found")
-                }
-            }
-        }
-    }
-
-    private fun loadExerciseSuggestions() {
-        viewModelScope.launch {
-            getExerciseNamesUseCase().collect { names ->
-                _exerciseSuggestions.value = names
-            }
-        }
-    }
+    // Data flow directly from Repository
+    val workoutDetails: StateFlow<WorkoutDetails?> = repository.getWorkoutDetails(workoutId)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
 
     fun addExercise(name: String) {
         viewModelScope.launch {
-            addExerciseUseCase(workoutId, name)
-        }
-    }
-
-    fun addSet(exerciseId: Long, previousSetWeight: Double?, previousSetReps: String?) {
-        viewModelScope.launch {
-            val currentState = _uiState.value
-            val currentExercise = if (currentState is WorkoutDetailsUiState.Success) {
-                currentState.details.exercises.find { it.id == exerciseId }
-            } else null
-
-            val nextSetNumber = (currentExercise?.sets?.size ?: 0) + 1
-
-            // SMART LOAD LOGIC:
-            // 1. Try to use data from the previous set in the CURRENT workout.
-            // 2. If null/zero, fetch the last set from HISTORY (previous workouts).
-            // 3. Fallback to default 0.0 / "0".
-
-            var suggestedWeight = previousSetWeight ?: 0.0
-            var suggestedReps = previousSetReps ?: "0"
-
-            if (suggestedWeight == 0.0 && currentExercise != null) {
-                // If no weight in current session, look into history
-                val historySet = getLastSetForExerciseUseCase(currentExercise.name)
-                if (historySet != null) {
-                    suggestedWeight = historySet.weight
-                    suggestedReps = historySet.reps
-                }
-            }
-
-            addSetUseCase(
-                exerciseId = exerciseId,
-                setNumber = nextSetNumber,
-                reps = suggestedReps,
-                weight = suggestedWeight
-            )
-        }
-    }
-
-    fun updateSet(set: GymSet, reps: String, weight: String) {
-        viewModelScope.launch {
-            val weightValue = weight.toDoubleOrNull() ?: 0.0
-            val updatedSet = set.copy(
-                reps = reps,
-                weight = weightValue
-            )
-            updateSetUseCase(updatedSet)
-        }
-    }
-
-    fun toggleSetCompletion(set: GymSet, isCompleted: Boolean) {
-        viewModelScope.launch {
-            toggleSetCompletionUseCase(set)
-        }
-    }
-
-    fun deleteSet(set: GymSet) {
-        viewModelScope.launch {
-            deleteSetUseCase(set)
+            repository.addExercise(workoutId, name)
         }
     }
 
     fun deleteExercise(exerciseId: Long) {
         viewModelScope.launch {
-            deleteExerciseUseCase(exerciseId, workoutId)
+            repository.deleteExercise(exerciseId, workoutId)
         }
     }
 
-    fun saveAsRoutine(name: String) {
+    fun addSet(exerciseId: Long, currentSetCount: Int) {
         viewModelScope.launch {
-            saveWorkoutAsRoutineUseCase(workoutId, name)
+            // FIX: 'reps' must be a String ("0" or "10"), not an Int.
+            // Using "0" as default placeholder for new sets.
+            repository.addSet(
+                exerciseId = exerciseId,
+                setNumber = currentSetCount + 1,
+                reps = "0",
+                weight = 0.0,
+                restSeconds = 60
+            )
+        }
+    }
+
+    fun updateSet(set: GymSet) {
+        viewModelScope.launch {
+            repository.updateSet(set)
+        }
+    }
+
+    fun deleteSet(set: GymSet) {
+        viewModelScope.launch {
+            repository.deleteSet(set)
+        }
+    }
+
+    // --- Routine Saving Logic ---
+
+    fun showSaveRoutineDialog() {
+        _uiState.value = _uiState.value.copy(isSaveRoutineDialogVisible = true)
+    }
+
+    fun hideSaveRoutineDialog() {
+        _uiState.value = _uiState.value.copy(isSaveRoutineDialogVisible = false)
+    }
+
+    fun saveAsRoutine(routineName: String) {
+        val details = workoutDetails.value ?: return
+
+        viewModelScope.launch {
+            // FIX: Ensure parameters match UseCase signature: (name: String, details: WorkoutDetails)
+            saveWorkoutAsRoutineUseCase(routineName, details)
+            hideSaveRoutineDialog()
         }
     }
 }
 
-sealed class WorkoutDetailsUiState {
-    data object Loading : WorkoutDetailsUiState()
-    data class Success(val details: WorkoutDetails) : WorkoutDetailsUiState()
-    data class Error(val message: String) : WorkoutDetailsUiState()
-}
+// Simple UI State data class for this screen
+data class WorkoutDetailsUiState(
+    val isSaveRoutineDialogVisible: Boolean = false
+)

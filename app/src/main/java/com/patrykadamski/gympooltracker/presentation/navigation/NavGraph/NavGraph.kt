@@ -1,57 +1,40 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/presentation/navigation/NavGraph/NavGraph.kt
 package com.patrykadamski.gympooltracker.presentation.navigation.NavGraph
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import com.patrykadamski.gympooltracker.presentation.add_workout.AddWorkoutScreen
 import com.patrykadamski.gympooltracker.presentation.home.HomeScreen
-import com.patrykadamski.gympooltracker.presentation.navigation.Screen
-import com.patrykadamski.gympooltracker.presentation.stats.StatisticsScreen
+import com.patrykadamski.gympooltracker.presentation.routines.RoutineListScreen
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun SetupNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route,
-        modifier = Modifier.fillMaxSize()
+        startDestination = "home"
     ) {
-        composable(Screen.Home.route) {
+        // Screen: Home
+        composable(route = "home") {
             HomeScreen(
-                onNavigateToAddWorkout = { workoutId ->
-                    val id = workoutId ?: -1
-                    navController.navigate("add_workout/$id")
+                onNavigateToWorkoutDetails = { workoutId ->
+                    // TODO: Navigate to Workout Details Screen using workoutId
+                    // navController.navigate("workout_details/$workoutId")
                 },
-                onNavigateToStatistics = {
-                    navController.navigate(Screen.Statistics.route)
+                // FIX: Renamed parameter from 'onNavigateToAddWorkout' to 'onNavigateToCreateWorkout'
+                onNavigateToCreateWorkout = {
+                    // TODO: Navigate to Create Workout Screen
+                    // navController.navigate("create_workout")
                 }
             )
         }
 
-        composable(
-            route = "add_workout/{workoutId}",
-            arguments = listOf(
-                navArgument("workoutId") {
-                    type = NavType.IntType
-                    defaultValue = -1
-                }
-            )
-        ) {
-            AddWorkoutScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Screen.Statistics.route) {
-            StatisticsScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
+        // Screen: Routines
+        composable(route = "routines") {
+            RoutineListScreen(
+                onNavigateToCreate = {
+                    // TODO: Navigate to Create Routine Screen
+                    // navController.navigate("create_routine")
                 }
             )
         }
