@@ -13,7 +13,7 @@ import com.patrykadamski.gympooltracker.domain.model.WorkoutType
 
 object WorkoutMapper {
 
-    fun mapEntityToDomain(entity: Workout): Workout {
+    fun mapEntityToDomain(entity: WorkoutEntity): Workout {
         return Workout(
             id = entity.id,
             type = entity.type,
@@ -24,6 +24,7 @@ object WorkoutMapper {
         )
     }
 
+    // FIX: Tutaj musi być 'Workout' (z domeny), a zwracamy 'WorkoutEntity' (do bazy)
     fun mapDomainToEntity(domain: Workout): WorkoutEntity {
         return WorkoutEntity(
             id = domain.id,
@@ -51,7 +52,7 @@ object WorkoutMapper {
             setNumber = entity.setNumber,
             reps = entity.reps,
             weight = entity.weight,
-            rpe = entity.rpe, // FIX: Use value from Entity
+            rpe = entity.rpe,
             restSeconds = entity.restSeconds,
             isCompleted = entity.isCompleted
         )
@@ -64,7 +65,7 @@ object WorkoutMapper {
             setNumber = domain.setNumber,
             reps = domain.reps,
             weight = domain.weight,
-            rpe = domain.rpe, // FIX: Pass RPE to Entity constructor
+            rpe = domain.rpe,
             restSeconds = domain.restSeconds,
             isCompleted = domain.isCompleted
         )
