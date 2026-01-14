@@ -20,8 +20,9 @@ class WorkoutRepositoryImpl(
 ) : WorkoutRepository {
 
     override fun getWorkouts(): Flow<List<Workout>> {
+        // Here, entities is List<WorkoutEntity>
         return dao.getAllWorkouts().map { entities ->
-            entities.map { WorkoutMapper.mapEntityToDomain(it) }
+            entities.map { entity -> WorkoutMapper.mapEntityToDomain(entity) }
         }
     }
 
@@ -81,11 +82,13 @@ class WorkoutRepositoryImpl(
         weight: Double,
         restSeconds: Int
     ): Long {
+        // FIX: Added 'rpe' parameter to constructor (default 0.0)
         val setEntity = SetEntity(
             exerciseId = exerciseId,
             setNumber = setNumber,
             reps = reps,
             weight = weight,
+            rpe = 0.0,
             restSeconds = restSeconds,
             isCompleted = false
         )
