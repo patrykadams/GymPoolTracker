@@ -1,61 +1,41 @@
 // file: app/src/main/java/com/patrykadamski/gympooltracker/domain/usecase/SaveWorkoutAsRoutineUseCase.kt
 package com.patrykadamski.gympooltracker.domain.usecase
 
-import com.patrykadamski.gympooltracker.domain.model.Routine
-import com.patrykadamski.gympooltracker.domain.model.RoutineExercise
+import com.patrykadamski.gympooltracker.data.local.RoutineEntity
+import com.patrykadamski.gympooltracker.data.local.RoutineExerciseEntity
+import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
 import com.patrykadamski.gympooltracker.domain.repository.RoutineRepository
-import com.patrykadamski.gympooltracker.domain.repository.WorkoutRepository
-import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
 
 class SaveWorkoutAsRoutineUseCase @Inject constructor(
-    private val workoutRepository: WorkoutRepository,
-    private val routineRepository: RoutineRepository
+    private val repository: RoutineRepository
 ) {
-    /**
-     * Creates a new Routine based on an existing Workout.
-     * @param workoutId ID of the source workout
-     * @param routineName Name given by the user
-     */
-    suspend operator fun invoke(workoutId: Int, routineName: String) {
-        // 1. Fetch full workout details
-        // FIX: Collect the Flow using firstOrNull() to get the actual data object
-        val details = workoutRepository.getWorkoutDetails(workoutId).firstOrNull() ?: return
+    suspend operator fun invoke(name: String, workoutDetails: WorkoutDetails) {
+        // 1. Create the Routine Entity
+        val routine = RoutineEntity(
+            name = name,
+            description = "Created from workout on ${workoutDetails.workout.date}"
+        )
 
-        // 2. Generate Description (e.g. "Squat / Bench Press / ...")
-        // FIX: Use 'name' property from GymExercise
-        val description = details.exercises
-            .take(3)
-            .joinToString(separator = " / ") { it.name }
-            .let { if (details.exercises.size > 3) "$it..." else it }
+        // 2. Map Workout Exercises to Routine Exercises
+        val routineExercises = workoutDetails.exercises.mapIndexed { index, exercise ->
+            // Logic to determine target reps/sets based on what was done
+            val setsCount = exercise.sets.size
+            // Create a string representation of reps (e.g., "10" or "8-12")
+            // Taking the reps from the first set as a default, or "10" if empty
+            val representativeReps = exercise.sets.firstOrNull()?.reps ?: "10"
 
-        // 3. Map Exercises
-        val routineExercises = details.exercises.mapIndexed { index, gymExercise ->
-            // Determine sets count
-            val setsCount = gymExercise.sets.size
-
-            // Determine representative reps (take from first set or default to "8-12")
-            val representativeReps = gymExercise.sets.firstOrNull()?.reps ?: "10"
-
-            RoutineExercise(
-                id = 0, // Auto-generated
-                name = gymExercise.name, // FIX: Property is 'name' in GymExercise
-                sets = if (setsCount == 0) 3 else setsCount, // Default to 3 if no sets added yet
+            RoutineExerciseEntity(
+                routineId = 0, // Repository will assign this
+                name = exercise.name,
+                sets = setsCount,
                 reps = representativeReps,
-                targetRpe = "", // Default empty
-                orderIndex = index + 1
+                targetRpe = "8.0", // Default target RPE
+                orderIndex = index
             )
         }
 
-        // 4. Create Routine Object
-        val routine = Routine(
-            id = 0,
-            name = routineName,
-            description = description,
-            exercises = routineExercises
-        )
-
-        // 5. Save to Repo
-        routineRepository.createRoutine(routine)
+        // FIX: Method name is 'insertRoutine', not 'createRoutine'
+        repository.insertRoutine(routine, routineExercises)
     }
 }
