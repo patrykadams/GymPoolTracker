@@ -1,3 +1,4 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/data/local/WorkoutDao.kt
 package com.patrykadamski.gympooltracker.data.local
 
 import androidx.room.Dao
@@ -26,7 +27,6 @@ interface WorkoutDao {
     @Query("SELECT * FROM workouts WHERE id = :id")
     suspend fun getWorkoutById(id: Int): WorkoutEntity?
 
-    // FIX: Returns WorkoutWithExercises instead of RoutineWithExercises
     @Transaction
     @Query("SELECT * FROM workouts WHERE id = :workoutId")
     fun getWorkoutWithExercises(workoutId: Int): Flow<WorkoutWithExercises?>
@@ -58,6 +58,7 @@ interface WorkoutDao {
     @Query("SELECT MAX(weight) FROM sets INNER JOIN exercises ON sets.exerciseId = exercises.id WHERE exercises.name = :exerciseName")
     fun getPersonalRecord(exerciseName: String): Flow<Double?>
 
-    @Query("SELECT * FROM sets INNER JOIN exercises ON sets.exerciseId = exercises.id WHERE exercises.name = :exerciseName ORDER BY sets.id DESC LIMIT 1")
+    // FIX: Changed "SELECT *" to "SELECT sets.*" to avoid fetching Exercise columns into SetEntity
+    @Query("SELECT sets.* FROM sets INNER JOIN exercises ON sets.exerciseId = exercises.id WHERE exercises.name = :exerciseName ORDER BY sets.id DESC LIMIT 1")
     suspend fun getLastSetForExercise(exerciseName: String): SetEntity?
 }

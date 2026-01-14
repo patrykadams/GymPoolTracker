@@ -1,8 +1,8 @@
-// file: app/src/main/java/com/patrykadamski/gympooltracker/data/local/SetEntity.kt
 package com.patrykadamski.gympooltracker.data.local
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -14,15 +14,17 @@ import androidx.room.PrimaryKey
             childColumns = ["exerciseId"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [Index(value = ["exerciseId"])] // FIX: Added index to silence warning
 )
 data class SetEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
     val exerciseId: Long,
     val setNumber: Int,
     val reps: String,
     val weight: Double,
-    val rpe: Double = 0.0, // This field must exist!
-    val restSeconds: Int,
-    val isCompleted: Boolean
+    val rpe: Double = 0.0,
+    val restSeconds: Int = 60,
+    val isCompleted: Boolean = false
 )
