@@ -13,32 +13,38 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// FIX: Renamed class from WorkoutDetailsViewModel to WorkoutDetailsVM to bypass Hilt cache issue
 @HiltViewModel
-class WorkoutDetailsViewModel @Inject constructor(
+class WorkoutDetailsVM @Inject constructor(
     private val repository: WorkoutRepository,
     private val saveWorkoutAsRoutineUseCase: SaveWorkoutAsRoutineUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // Retrieve workoutId from Navigation Arguments
     private val workoutId: Int = checkNotNull(savedStateHandle["workoutId"])
 
-    // Internal mutable state for specific UI flags (like showing dialogs)
     private val _uiState = MutableStateFlow(WorkoutDetailsUiState())
     val uiState = _uiState.asStateFlow()
 
-    // Data flow directly from Repository
     val workoutDetails: StateFlow<WorkoutDetails?> = repository.getWorkoutDetails(workoutId)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
         )
+
+    val exerciseSuggestions: StateFlow<List<String>> = flowOf(
+        listOf("Bench Press", "Squat", "Deadlift", "Pull Up", "Overhead Press", "Barbell Row")
+    ).stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     fun addExercise(name: String) {
         viewModelScope.launch {
@@ -54,8 +60,6 @@ class WorkoutDetailsViewModel @Inject constructor(
 
     fun addSet(exerciseId: Long, currentSetCount: Int) {
         viewModelScope.launch {
-            // FIX: 'reps' must be a String ("0" or "10"), not an Int.
-            // Using "0" as default placeholder for new sets.
             repository.addSet(
                 exerciseId = exerciseId,
                 setNumber = currentSetCount + 1,
@@ -78,8 +82,6 @@ class WorkoutDetailsViewModel @Inject constructor(
         }
     }
 
-    // --- Routine Saving Logic ---
-
     fun showSaveRoutineDialog() {
         _uiState.value = _uiState.value.copy(isSaveRoutineDialogVisible = true)
     }
@@ -92,14 +94,12 @@ class WorkoutDetailsViewModel @Inject constructor(
         val details = workoutDetails.value ?: return
 
         viewModelScope.launch {
-            // FIX: Ensure parameters match UseCase signature: (name: String, details: WorkoutDetails)
             saveWorkoutAsRoutineUseCase(routineName, details)
             hideSaveRoutineDialog()
         }
     }
 }
 
-// Simple UI State data class for this screen
 data class WorkoutDetailsUiState(
     val isSaveRoutineDialogVisible: Boolean = false
 )
