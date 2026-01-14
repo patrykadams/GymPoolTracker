@@ -1,25 +1,31 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/MainActivity.kt
 package com.patrykadamski.gympooltracker
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavType
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import com.patrykadamski.gympooltracker.presentation.add_workout.AddWorkoutScreen
 import com.patrykadamski.gympooltracker.presentation.home.HomeScreen
-import com.patrykadamski.gympooltracker.presentation.stats.StatisticsScreen
+import com.patrykadamski.gympooltracker.presentation.routines.RoutineListScreen
 import com.patrykadamski.gympooltracker.presentation.theme.GymPoolTrackerTheme
-import com.patrykadamski.gympooltracker.presentation.workout_details.WorkoutDetailsScreen
 import dagger.hilt.android.AndroidEntryPoint
-
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -27,81 +33,83 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             GymPoolTrackerTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    GymPoolTrackerApp()
-                }
+                MainScreen()
             }
         }
     }
 }
 
-/**
- * The main entry point for the application's UI.
- * Configures the Navigation Graph and routes.
- */
 @Composable
-fun GymPoolTrackerApp() {
+fun MainScreen() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = Screen.Home.route) {
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination
 
-        // --- HOME SCREEN ---
-        composable(route = Screen.Home.route) {
-            HomeScreen(
-                // Logic: If ID is null, we are creating a new workout -> Go to AddWorkoutScreen.
-                // If ID is NOT null, we are viewing an existing workout -> Go to WorkoutDetailsScreen.
-                onNavigateToAddWorkout = { workoutId ->
-                    if (workoutId != null) {
-                        navController.navigate(Screen.WorkoutDetails.createRoute(workoutId))
-                    } else {
-                        navController.navigate(Screen.AddWorkout.route)
+                // Item: Home
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                    label = { Text("Home") },
+                    selected = currentDestination?.hierarchy?.any { it.route == "home" } == true,
+                    onClick = {
+                        navController.navigate("home") {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
-                },
-                onNavigateToStatistics = {
-                    navController.navigate(Screen.Statistics.route)
-                }
-            )
-        }
+                )
 
-        // --- ADD WORKOUT SCREEN (Creation Phase) ---
-        composable(route = Screen.AddWorkout.route) {
-            AddWorkoutScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
+                // Item: Routines
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.List, contentDescription = "Routines") },
+                    label = { Text("Routines") },
+                    selected = currentDestination?.hierarchy?.any { it.route == "routines" } == true,
+                    onClick = {
+                        navController.navigate("routines") {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
         }
-
-        // --- STATISTICS SCREEN ---
-        composable(route = Screen.Statistics.route) {
-            StatisticsScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-
-        // --- WORKOUT DETAILS SCREEN (Atlas / Execution Phase) ---
-        composable(
-            route = Screen.WorkoutDetails.route,
-            arguments = listOf(
-                navArgument("workoutId") { type = NavType.IntType }
-            )
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+            modifier = Modifier.padding(innerPadding)
         ) {
-            WorkoutDetailsScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-    }
-}
+            // Screen: Home
+            composable("home") {
+                HomeScreen(
+                    onNavigateToWorkoutDetails = { workoutId ->
+                        // Placeholder navigation to details
+                        // navController.navigate("workout_details/$workoutId")
+                    },
+                    // FIX: Parameter name must match HomeScreen definition
+                    onNavigateToCreateWorkout = {
+                        // Placeholder navigation to create workout logic
+                    }
+                )
+            }
 
-/**
- * Sealed class defining all available navigation routes and helper methods for arguments.
- */
-sealed class Screen(val route: String) {
-    object Home : Screen("home")
-    object AddWorkout : Screen("add_workout")
-    object Statistics : Screen("statistics")
-    object WorkoutDetails : Screen("workout_details/{workoutId}") {
-        fun createRoute(workoutId: Int) = "workout_details/$workoutId"
+            // Screen: Routines List
+            composable("routines") {
+                RoutineListScreen(
+                    onNavigateToCreate = {
+                        // Placeholder navigation to create routine screen
+                    }
+                )
+            }
+        }
     }
 }
