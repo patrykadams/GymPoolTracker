@@ -1,10 +1,10 @@
-// file: app/src/main/java/com/patrykadamski/gympooltracker/data/mapper/WorkoutMapper.kt
 package com.patrykadamski.gympooltracker.data.mapper
 
+import com.patrykadamski.gympooltracker.data.local.ExerciseWithSets
 import com.patrykadamski.gympooltracker.data.local.SetEntity
 import com.patrykadamski.gympooltracker.data.local.WorkoutEntity
 import com.patrykadamski.gympooltracker.data.local.WorkoutTypeEntity
-import com.patrykadamski.gympooltracker.data.local.RoutineWithExercises
+import com.patrykadamski.gympooltracker.data.local.WorkoutWithExercises
 import com.patrykadamski.gympooltracker.domain.model.GymSet
 import com.patrykadamski.gympooltracker.domain.model.Workout
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
@@ -39,11 +39,9 @@ object WorkoutMapper {
 
     // --- Relation Mappers (Workout + Exercises + Sets) ---
 
-    fun mapRelationToDetails(relation: RoutineWithExercises): WorkoutDetails {
-        // RoutineWithExercises is assumed to be the POJO holding WorkoutEntity + List<ExerciseWithSets>
-        // Note: You might need to adjust 'RoutineWithExercises' name if your relation class is named differently (e.g. WorkoutWithExercises)
+    fun mapRelationToDetails(relation: WorkoutWithExercises): WorkoutDetails {
 
-        val workout = mapEntityToDomain(relation.routine) // Assuming 'routine' is the embedded WorkoutEntity field
+        val workout = mapEntityToDomain(relation.workout)
 
         val exercises = relation.exercises.map { exerciseWithSets ->
             WorkoutExercise(
@@ -67,16 +65,13 @@ object WorkoutMapper {
             reps = entity.reps,
             weight = entity.weight,
             isCompleted = entity.isCompleted
-            // restSeconds is usually internal logic, usually not needed in basic GymSet unless added to model
         )
     }
 
     fun mapSetDomainToEntity(domain: GymSet): SetEntity {
-        // Note: This mapping is tricky because GymSet might not have all Entity fields (like parent ID).
-        // Usually, updates happen via specific fields. This is a placeholder for updateSet.
         return SetEntity(
             id = domain.id,
-            exerciseId = 0, // Caution: ID must be preserved or handled by DAO
+            exerciseId = 0, // ID handled by DB relations logic usually
             setNumber = 0,
             reps = domain.reps,
             weight = domain.weight,
