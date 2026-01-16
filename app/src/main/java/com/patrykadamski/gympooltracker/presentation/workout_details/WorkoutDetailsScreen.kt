@@ -40,7 +40,7 @@ fun WorkoutDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = workoutDetails?.workout?.type?.name ?: "Workout Details") },
+                title = { Text(text = workoutDetails?.workout?.type ?: "Workout Details") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

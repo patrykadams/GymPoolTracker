@@ -30,7 +30,6 @@ class StatisticsViewModel @Inject constructor(
     getWorkoutsUseCase: GetWorkoutsUseCase
 ) : ViewModel() {
 
-    // Vico wymaga producenta modelu danych
     private val chartEntryModelProducer = ChartEntryModelProducer()
 
     val uiState: StateFlow<StatsUiState> = getWorkoutsUseCase()
@@ -44,22 +43,18 @@ class StatisticsViewModel @Inject constructor(
     private fun calculateStats(workouts: List<Workout>): StatsUiState {
         if (workouts.isEmpty()) return StatsUiState()
 
-        // 1. Obliczanie proporcji Basen vs Siłownia
         val gymCount = workouts.count { !isPool(it.type) }
         val poolCount = workouts.count { isPool(it.type) }
         val total = (gymCount + poolCount).coerceAtLeast(1).toFloat()
 
-        // 2. Przygotowanie danych do wykresu (Ostatnie 7 dni)
         val today = LocalDate.now()
         val last7Days = (0..6).map { today.minusDays(it.toLong()) }.reversed()
 
-        // Grupujemy treningi po dacie i sumujemy kalorie
         val caloriesPerDay = workouts
-            .filter { it.date.toLocalDate().isAfter(today.minusDays(7)) }
-            .groupBy { it.date.toLocalDate() }
+            .filter { it.date?.toLocalDate()?.isAfter(today.minusDays(7)) == true }
+            .groupBy { it.date!!.toLocalDate() }
             .mapValues { entry -> entry.value.sumOf { it.caloriesBurned } }
 
-        // Tworzymy wpisy dla Vico (x = index dnia, y = kalorie)
         val entries = last7Days.mapIndexed { index, date ->
             val calories = caloriesPerDay[date] ?: 0
             entryOf(index.toFloat(), calories.toFloat())
