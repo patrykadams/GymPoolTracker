@@ -1,6 +1,5 @@
 package com.patrykadamski.gympooltracker.data.mapper
 
-import com.patrykadamski.gympooltracker.data.local.ExerciseWithSets
 import com.patrykadamski.gympooltracker.data.local.SetEntity
 import com.patrykadamski.gympooltracker.data.local.WorkoutEntity
 import com.patrykadamski.gympooltracker.data.local.WorkoutTypeEntity
@@ -10,6 +9,8 @@ import com.patrykadamski.gympooltracker.domain.model.Workout
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
 import com.patrykadamski.gympooltracker.domain.model.WorkoutExercise
 import com.patrykadamski.gympooltracker.domain.model.WorkoutType
+import java.time.Instant
+import java.time.ZoneId
 
 object WorkoutMapper {
 
@@ -19,7 +20,10 @@ object WorkoutMapper {
         return Workout(
             id = entity.id,
             type = entity.type,
-            date = entity.date,
+            // FIX: Convert Long (timestamp) to LocalDateTime
+            date = Instant.ofEpochMilli(entity.date)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime(),
             durationMinutes = entity.durationMinutes,
             caloriesBurned = entity.caloriesBurned,
             notes = entity.notes
@@ -30,7 +34,10 @@ object WorkoutMapper {
         return WorkoutEntity(
             id = domain.id,
             type = domain.type,
-            date = domain.date,
+            // FIX: Convert LocalDateTime back to Long (timestamp)
+            date = domain.date.atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli(),
             durationMinutes = domain.durationMinutes,
             caloriesBurned = domain.caloriesBurned,
             notes = domain.notes
