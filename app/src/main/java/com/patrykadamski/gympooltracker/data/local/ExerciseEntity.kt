@@ -6,20 +6,23 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "exercises",
+    tableName = "routine_exercises",
     foreignKeys = [
         ForeignKey(
-            entity = WorkoutEntity::class,
+            entity = RoutineEntity::class,
             parentColumns = ["id"],
-            childColumns = ["workoutId"],
+            childColumns = ["routineId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["workoutId"])] // FIX: Added index to silence warning
+    indices = [Index(value = ["routineId"])]
 )
-data class ExerciseEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val workoutId: Int,
-    val name: String
+data class RoutineExerciseEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val routineId: Long,
+    val name: String,
+    val sets: Int,
+    val reps: String,
+    val targetRpe: String,
+    val orderIndex: Int
 )
