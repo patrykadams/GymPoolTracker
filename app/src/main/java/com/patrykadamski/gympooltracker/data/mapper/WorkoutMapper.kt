@@ -69,8 +69,12 @@ object WorkoutMapper {
     fun mapSetEntityToDomain(entity: SetEntity): GymSet {
         return GymSet(
             id = entity.id,
+            exerciseId = entity.exerciseId,
+            setNumber = entity.setNumber,
             reps = entity.reps,
             weight = entity.weight,
+            rpe = entity.rpe,
+            restSeconds = entity.restSeconds,
             isCompleted = entity.isCompleted
         )
     }
