@@ -4,7 +4,6 @@ package com.patrykadamski.gympooltracker.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 
-// FIX: Ensure all entities (including WorkoutEntity) are listed here
 @Database(
     entities = [
         WorkoutEntity::class,
@@ -17,8 +16,14 @@ import androidx.room.RoomDatabase
     version = 1,
     exportSchema = false
 )
-abstract class AppDatabase : RoomDatabase() {
+abstract class GymDatabase : RoomDatabase() {
+
     abstract val workoutDao: WorkoutDao
     abstract val routineDao: RoutineDao
     abstract val workoutTypeDao: WorkoutTypeDao
+
+
+    companion object {
+        const val DATABASE_NAME = "gym_pool_tracker_db"
+    }
 }

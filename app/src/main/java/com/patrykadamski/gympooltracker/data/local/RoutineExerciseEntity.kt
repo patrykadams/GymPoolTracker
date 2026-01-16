@@ -1,4 +1,4 @@
-// file: app/src/main/java/com/patrykadamski/gympooltracker/data/local/RoutineExerciseEntity.kt
+// Plik: RoutineExerciseEntity.kt
 package com.patrykadamski.gympooltracker.data.local
 
 import androidx.room.Entity

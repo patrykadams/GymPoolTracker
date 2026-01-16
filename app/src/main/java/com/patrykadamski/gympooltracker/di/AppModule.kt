@@ -33,7 +33,6 @@ object AppModule {
             GymDatabase::class.java,
             GymDatabase.DATABASE_NAME
         )
-            // Fallback strategy for database migrations (clears DB on version change mismatch)
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -43,7 +42,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideWorkoutDao(database: GymDatabase): WorkoutDao {
-        return database.dao
+
+        return database.workoutDao
     }
 
     @Provides
@@ -87,7 +87,6 @@ object AppModule {
         return GetRoutinesUseCase(repository)
     }
 
-    // FIX: Updated parameter to RoutineRepository (was WorkoutRepository)
     @Provides
     @Singleton
     fun provideSaveWorkoutAsRoutineUseCase(
