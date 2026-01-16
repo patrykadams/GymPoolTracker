@@ -33,5 +33,4 @@ data class GymExercise(
  */
 data class WorkoutDetails(
     val workout: Workout,
-    val exercises: List<GymExercise>
-)
+    val exercises: List<WorkoutExercise>)
