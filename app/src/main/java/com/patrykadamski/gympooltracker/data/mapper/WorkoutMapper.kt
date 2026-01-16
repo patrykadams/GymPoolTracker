@@ -30,14 +30,17 @@ object WorkoutMapper {
         )
     }
 
+
+
     fun mapDomainToEntity(domain: Workout): WorkoutEntity {
         return WorkoutEntity(
             id = domain.id,
             type = domain.type,
-            // FIX: Convert LocalDateTime back to Long (timestamp)
-            date = domain.date.atZone(ZoneId.systemDefault())
-                .toInstant()
-                .toEpochMilli(),
+            date = domain.date?.atZone(ZoneId.systemDefault())
+                ?.toInstant()
+                ?.toEpochMilli()
+                ?: System.currentTimeMillis(),
+
             durationMinutes = domain.durationMinutes,
             caloriesBurned = domain.caloriesBurned,
             notes = domain.notes

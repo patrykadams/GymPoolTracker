@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime // <--- ZMIANA 1: Dodaj ten import
 import javax.inject.Inject
 
 @HiltViewModel
@@ -19,7 +20,6 @@ class AddWorkoutViewModel @Inject constructor(
 ) : ViewModel() {
 
     // Helper state to hold available workout types.
-    // FIX: Added 'caloriesPerMinute' parameter to match the data class definition.
     val workoutTypes: StateFlow<List<WorkoutType>> = kotlinx.coroutines.flow.flowOf(
         listOf(
             WorkoutType(id = 1, name = "Strength", iconName = "dumbbell", caloriesPerMinute = 5),
@@ -36,9 +36,9 @@ class AddWorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             // Create a new workout object
             val newWorkout = Workout(
-                id = 0, // 0 means auto-generate ID
-                type = type.name, // Storing type name as String
-                date = System.currentTimeMillis(),
+                id = 0,
+                type = type.name,
+                date = LocalDateTime.now(),
                 durationMinutes = 0,
                 caloriesBurned = 0,
                 notes = ""
