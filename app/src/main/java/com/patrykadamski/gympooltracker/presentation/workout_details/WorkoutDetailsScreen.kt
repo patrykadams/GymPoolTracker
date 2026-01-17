@@ -1,4 +1,3 @@
-// file: app/src/main/java/com/patrykadamski/gympooltracker/presentation/workout_details/WorkoutDetailsScreen.kt
 package com.patrykadamski.gympooltracker.presentation.workout_details
 
 import androidx.compose.foundation.background
@@ -25,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.patrykadamski.gympooltracker.data.local.ExerciseWithSets
-import com.patrykadamski.gympooltracker.data.local.SetEntity // FIX: Changed import from GymSet to SetEntity
+import com.patrykadamski.gympooltracker.data.local.SetEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,16 +150,16 @@ fun ExerciseCard(
             // Column Headers
             Row(modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
                 Text("Set", modifier = Modifier.weight(1f), fontSize = 12.sp, color = Color.Gray)
-                Text("Previous", modifier = Modifier.weight(2f), fontSize = 12.sp, color = Color.Gray)
+                Text("Prev", modifier = Modifier.weight(2f), fontSize = 12.sp, color = Color.Gray)
                 Text("Kg", modifier = Modifier.weight(2f), fontSize = 12.sp, color = Color.Gray)
                 Text("Reps", modifier = Modifier.weight(2f), fontSize = 12.sp, color = Color.Gray)
-                Spacer(modifier = Modifier.width(32.dp)) // Checkbox space
+                Spacer(modifier = Modifier.width(32.dp))
             }
 
             // List of Sets
             exercise.sets.forEachIndexed { index, set ->
                 SetRow(
-                    set = set,
+                    set = set, // Tu jest klucz - 'set' musi być typu SetEntity
                     setNumber = index + 1,
                     onUpdateSet = onUpdateSet,
                     onDeleteSet = { onDeleteSet(set.id.toInt()) }
@@ -183,13 +182,13 @@ fun ExerciseCard(
 
 @Composable
 fun SetRow(
-    set: SetEntity, // FIX: Changed type from GymSet to SetEntity
+    set: SetEntity, // FIX: Używamy SetEntity
     setNumber: Int,
     onUpdateSet: (Int, String, Double, Boolean) -> Unit,
     onDeleteSet: () -> Unit
 ) {
-    // Local state for inputs to prevent UI jumping while typing
-    var weightText by remember(set.weight) { mutableStateOf(if (set.weight > 0) set.weight.toString() else "") }
+    // Zapamiętanie stanu, żeby kursor nie skakał
+    var weightText by remember(set.weight) { mutableStateOf(if (set.weight > 0.0) set.weight.toString() else "") }
     var repsText by remember(set.reps) { mutableStateOf(set.reps) }
 
     val backgroundColor = if (set.isCompleted)
@@ -204,14 +203,14 @@ fun SetRow(
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Set Number
+        // Numer serii
         Text(
             text = "$setNumber",
             modifier = Modifier.weight(1f),
             fontWeight = FontWeight.Bold
         )
 
-        // Previous History (Placeholder)
+        // Previous (Placeholder)
         Text(
             text = "-",
             modifier = Modifier.weight(2f),
@@ -219,7 +218,7 @@ fun SetRow(
             fontSize = 12.sp
         )
 
-        // Weight Input
+        // Waga
         OutlinedTextField(
             value = weightText,
             onValueChange = {
@@ -232,7 +231,7 @@ fun SetRow(
             singleLine = true
         )
 
-        // Reps Input
+        // Powtórzenia
         OutlinedTextField(
             value = repsText,
             onValueChange = {
@@ -245,7 +244,7 @@ fun SetRow(
             singleLine = true
         )
 
-        // Checkbox (Completion)
+        // Checkbox
         IconButton(
             onClick = {
                 val w = weightText.toDoubleOrNull() ?: 0.0
