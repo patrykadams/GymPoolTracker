@@ -18,12 +18,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.patrykadamski.gympooltracker.presentation.add_workout.AddWorkoutScreen
 import com.patrykadamski.gympooltracker.presentation.home.HomeScreen
 import com.patrykadamski.gympooltracker.presentation.routines.RoutineListScreen
+import com.patrykadamski.gympooltracker.presentation.workout_details.WorkoutDetailsScreen
 import com.patrykadamski.gympooltracker.presentation.theme.GymPoolTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -92,12 +96,35 @@ fun MainScreen() {
             composable("home") {
                 HomeScreen(
                     onNavigateToWorkoutDetails = { workoutId ->
-                        // Placeholder navigation to details
-                        // navController.navigate("workout_details/$workoutId")
+                        // FIX: Navigate to details screen with ID
+                        navController.navigate("workout_details/$workoutId")
                     },
-                    // FIX: Parameter name must match HomeScreen definition
                     onNavigateToCreateWorkout = {
-                        // Placeholder navigation to create workout logic
+                        // FIX: Navigate to "Add Workout" screen
+                        navController.navigate("add_workout")
+                    }
+                )
+            }
+
+            // Screen: Add Workout (Select Type)
+            composable("add_workout") {
+                AddWorkoutScreen(
+                    onWorkoutCreated = { workoutId ->
+                        // After creating, remove "add_workout" from backstack and go to details
+                        navController.popBackStack()
+                        navController.navigate("workout_details/$workoutId")
+                    }
+                )
+            }
+
+            // Screen: Workout Details
+            composable(
+                route = "workout_details/{workoutId}",
+                arguments = listOf(navArgument("workoutId") { type = NavType.IntType }) // Assuming ID is Int. Change to LongType if needed.
+            ) {
+                WorkoutDetailsScreen(
+                    onNavigateBack = {
+                        navController.navigateUp()
                     }
                 )
             }
@@ -106,7 +133,7 @@ fun MainScreen() {
             composable("routines") {
                 RoutineListScreen(
                     onNavigateToCreate = {
-                        // Placeholder navigation to create routine screen
+                        // Logic for creating routine directly can be added later
                     }
                 )
             }
