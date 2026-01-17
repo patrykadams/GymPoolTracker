@@ -4,6 +4,7 @@ package com.patrykadamski.gympooltracker.presentation.workout_details
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
@@ -84,6 +86,18 @@ fun WorkoutDetailsScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // NEW: Show Distance Card only if it's a swimming workout
+                if (isSwimmingWorkout(details.workout.type)) {
+                    item {
+                        SwimmingDistanceCard(
+                            distance = details.workout.distanceMeters,
+                            onDistanceChange = { newDistance ->
+                                viewModel.updateDistance(newDistance)
+                            }
+                        )
+                    }
+                }
+
                 items(details.exercises) { exercise ->
                     ExerciseItem(
                         exercise = exercise,
@@ -94,6 +108,54 @@ fun WorkoutDetailsScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+// NEW: Helper function to check workout type (Gym vs Pool)
+fun isSwimmingWorkout(type: String): Boolean {
+    return type.contains("pool", ignoreCase = true) ||
+            type.contains("swimming", ignoreCase = true) ||
+            type.contains("basen", ignoreCase = true) ||
+            type.contains("pływanie", ignoreCase = true)
+}
+
+// NEW: Composable component for editing swimming distance
+@Composable
+fun SwimmingDistanceCard(
+    distance: Int,
+    onDistanceChange: (Int) -> Unit
+) {
+    // Local state to handle text input smoothly
+    var textValue by remember(distance) { mutableStateOf(distance.toString()) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Pool Session Stats",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = textValue,
+                onValueChange = { newValue ->
+                    // Allow only digits
+                    if (newValue.all { it.isDigit() }) {
+                        textValue = newValue
+                        onDistanceChange(newValue.toIntOrNull() ?: 0)
+                    }
+                },
+                label = { Text("Total Distance (meters)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
         }
     }
 }

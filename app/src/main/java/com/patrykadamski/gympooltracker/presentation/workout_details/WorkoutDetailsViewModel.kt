@@ -82,6 +82,15 @@ class WorkoutDetailsVM @Inject constructor(
         }
     }
 
+    // NEW: Update workout distance (for Swimming)
+    fun updateDistance(distance: Int) {
+        val currentDetails = workoutDetails.value ?: return
+        val updatedWorkout = currentDetails.workout.copy(distanceMeters = distance)
+        viewModelScope.launch {
+            repository.insertWorkout(updatedWorkout)
+        }
+    }
+
     fun showSaveRoutineDialog() {
         _uiState.value = _uiState.value.copy(isSaveRoutineDialogVisible = true)
     }
