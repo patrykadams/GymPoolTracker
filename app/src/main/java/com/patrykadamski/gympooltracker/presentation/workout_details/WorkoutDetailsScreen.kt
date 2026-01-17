@@ -4,7 +4,6 @@ package com.patrykadamski.gympooltracker.presentation.workout_details
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,7 +18,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -79,7 +77,6 @@ fun WorkoutDetailsScreen(
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add Exercise")
             }
         },
-        // NEW: Bottom Bar for Timer
         bottomBar = {
             RestTimerOverlay(
                 timerState = timerState,
@@ -98,7 +95,7 @@ fun WorkoutDetailsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(bottom = 80.dp, top = 16.dp, start = 16.dp, end = 16.dp), // Extra bottom padding for timer
+                contentPadding = PaddingValues(bottom = 80.dp, top = 16.dp, start = 16.dp, end = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (isSwimmingWorkout(details.workout.type)) {
@@ -306,7 +303,7 @@ fun SetRow(
     onToggle: (GymSet, Boolean) -> Unit,
     onDelete: (GymSet) -> Unit
 ) {
-    // NEW: TextFields for editing values directly
+    // TextFields for editing values directly
     var repsText by remember(set.reps) { mutableStateOf(set.reps) }
     var weightText by remember(set.weight) { mutableStateOf(set.weight.toString()) }
 
@@ -322,7 +319,7 @@ fun SetRow(
             style = MaterialTheme.typography.bodyMedium
         )
 
-        // Reps Input
+        // FIX: Removed 'contentPadding' parameter which caused the error
         OutlinedTextField(
             value = repsText,
             onValueChange = {
@@ -333,11 +330,10 @@ fun SetRow(
                 .weight(1f)
                 .padding(end = 8.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
-            contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp)
+            singleLine = true
         )
 
-        // Weight Input
+        // FIX: Removed 'contentPadding' parameter here as well
         OutlinedTextField(
             value = weightText,
             onValueChange = {
@@ -349,11 +345,9 @@ fun SetRow(
                 .weight(1f)
                 .padding(end = 8.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true,
-            contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp)
+            singleLine = true
         )
 
-        // NEW: Checkbox for completion
         Checkbox(
             checked = set.isCompleted,
             onCheckedChange = { isChecked ->
