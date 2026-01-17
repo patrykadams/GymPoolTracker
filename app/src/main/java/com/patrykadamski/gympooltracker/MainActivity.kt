@@ -96,11 +96,9 @@ fun MainScreen() {
             composable("home") {
                 HomeScreen(
                     onNavigateToWorkoutDetails = { workoutId ->
-                        // FIX: Navigate to details screen with ID
                         navController.navigate("workout_details/$workoutId")
                     },
                     onNavigateToCreateWorkout = {
-                        // FIX: Navigate to "Add Workout" screen
                         navController.navigate("add_workout")
                     }
                 )
@@ -108,11 +106,14 @@ fun MainScreen() {
 
             // Screen: Add Workout (Select Type)
             composable("add_workout") {
+                // FIX: Added 'onNavigateBack' parameter here
                 AddWorkoutScreen(
                     onWorkoutCreated = { workoutId ->
-                        // After creating, remove "add_workout" from backstack and go to details
                         navController.popBackStack()
                         navController.navigate("workout_details/$workoutId")
+                    },
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
                 )
             }
@@ -120,7 +121,7 @@ fun MainScreen() {
             // Screen: Workout Details
             composable(
                 route = "workout_details/{workoutId}",
-                arguments = listOf(navArgument("workoutId") { type = NavType.IntType }) // Assuming ID is Int. Change to LongType if needed.
+                arguments = listOf(navArgument("workoutId") { type = NavType.IntType })
             ) {
                 WorkoutDetailsScreen(
                     onNavigateBack = {
