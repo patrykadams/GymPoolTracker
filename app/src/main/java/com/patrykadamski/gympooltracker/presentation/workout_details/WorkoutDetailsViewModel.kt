@@ -1,4 +1,3 @@
-// file: app/src/main/java/com/patrykadamski/gympooltracker/presentation/workout_details/WorkoutDetailsViewModel.kt
 package com.patrykadamski.gympooltracker.presentation.workout_details
 
 import androidx.lifecycle.SavedStateHandle
@@ -19,23 +18,58 @@ class WorkoutDetailsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // State holding the workout details (workout info + exercises + sets)
+    // Holds the current state of the workout (exercises, sets, etc.)
     private val _state = MutableStateFlow<WorkoutDetails?>(null)
     val state: StateFlow<WorkoutDetails?> = _state.asStateFlow()
 
+    // Retrieve the workout ID passed from the previous screen
+    private val workoutId: Int = checkNotNull(savedStateHandle["workoutId"])
+
     init {
-        // Retrieve 'workoutId' from the navigation arguments automatically via SavedStateHandle
-        val workoutId = savedStateHandle.get<Int>("workoutId")
-        if (workoutId != null) {
-            loadWorkoutDetails(workoutId)
+        loadWorkoutDetails()
+    }
+
+    private fun loadWorkoutDetails() {
+        viewModelScope.launch {
+            // Observe the workout details from the database in real-time
+            repository.getWorkoutDetails(workoutId).collect { details ->
+                _state.value = details
+            }
         }
     }
 
-    private fun loadWorkoutDetails(id: Int) {
+    // Called when user types a name and clicks "Add" in the dialog
+    fun addExercise(name: String) {
         viewModelScope.launch {
-            repository.getWorkoutDetails(id).collect { details ->
-                _state.value = details
-            }
+            repository.addExercise(workoutId, name)
+        }
+    }
+
+    // Called when user clicks "Add Set" button
+    fun addSet(exerciseId: Int) {
+        viewModelScope.launch {
+            repository.addSet(exerciseId)
+        }
+    }
+
+    // Called when user changes weight, reps, or completion status
+    fun updateSet(setId: Int, reps: String, weight: Double, isCompleted: Boolean) {
+        viewModelScope.launch {
+            repository.updateSet(setId, reps, weight, isCompleted)
+        }
+    }
+
+    // Called when user swipes or clicks delete on a set
+    fun deleteSet(setId: Int) {
+        viewModelScope.launch {
+            repository.deleteSet(setId)
+        }
+    }
+
+    // Called when user deletes an entire exercise
+    fun deleteExercise(exerciseId: Int) {
+        viewModelScope.launch {
+            repository.deleteExercise(exerciseId)
         }
     }
 }
