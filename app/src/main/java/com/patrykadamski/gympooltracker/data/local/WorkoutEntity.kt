@@ -13,5 +13,7 @@ data class WorkoutEntity(
     val date: Long,
     val durationMinutes: Int,
     val caloriesBurned: Int,
-    val notes: String
+    val notes: String,
+    // NEW: Added distance field for swimming (in meters)
+    val distanceMeters: Int = 0
 )

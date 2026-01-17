@@ -13,7 +13,8 @@ import androidx.room.RoomDatabase
         RoutineEntity::class,
         RoutineExerciseEntity::class
     ],
-    version = 1,
+    // NEW: Incremented version to 2 due to schema change (added distanceMeters)
+    version = 2,
     exportSchema = false
 )
 abstract class GymDatabase : RoomDatabase() {
@@ -21,7 +22,6 @@ abstract class GymDatabase : RoomDatabase() {
     abstract val workoutDao: WorkoutDao
     abstract val routineDao: RoutineDao
     abstract val workoutTypeDao: WorkoutTypeDao
-
 
     companion object {
         const val DATABASE_NAME = "gym_pool_tracker_db"

@@ -1,3 +1,4 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/data/mapper/WorkoutMapper.kt
 package com.patrykadamski.gympooltracker.data.mapper
 
 import com.patrykadamski.gympooltracker.data.local.SetEntity
@@ -26,23 +27,24 @@ object WorkoutMapper {
                 .toLocalDateTime(),
             durationMinutes = entity.durationMinutes,
             caloriesBurned = entity.caloriesBurned,
+            // NEW: Map distanceMeters from entity to domain
+            distanceMeters = entity.distanceMeters,
             notes = entity.notes
         )
     }
-
-
 
     fun mapDomainToEntity(domain: Workout): WorkoutEntity {
         return WorkoutEntity(
             id = domain.id,
             type = domain.type,
-            date = domain.date?.atZone(ZoneId.systemDefault())
-                ?.toInstant()
-                ?.toEpochMilli()
-                ?: System.currentTimeMillis(),
-
+            // FIX: Convert LocalDateTime back to Long (timestamp)
+            date = domain.date.atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli(),
             durationMinutes = domain.durationMinutes,
             caloriesBurned = domain.caloriesBurned,
+            // NEW: Map distanceMeters from domain to entity
+            distanceMeters = domain.distanceMeters,
             notes = domain.notes
         )
     }
@@ -89,8 +91,9 @@ object WorkoutMapper {
             setNumber = 0,
             reps = domain.reps,
             weight = domain.weight,
-            rpe = 0.0,
-            restSeconds = 60,
+            // FIX: Ensure rpe and restSeconds are mapped correctly
+            rpe = domain.rpe,
+            restSeconds = domain.restSeconds,
             isCompleted = domain.isCompleted
         )
     }

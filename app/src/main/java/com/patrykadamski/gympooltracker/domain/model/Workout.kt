@@ -12,6 +12,8 @@ data class Workout(
     val type: String,          // e.g., "Gym" or "Pool"
     val durationMinutes: Int,  // Duration of the session
     val caloriesBurned: Int,   // Estimated calories burned
-    val date: LocalDateTime?,   // Date and time of the workout
+    // NEW: Distance in meters (specific for Swimming)
+    val distanceMeters: Int = 0,
+    val date: LocalDateTime,   // Date and time of the workout
     val notes: String = ""     // User notes
 )

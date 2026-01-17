@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime // <--- ZMIANA 1: Dodaj ten import
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -36,11 +36,14 @@ class AddWorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             // Create a new workout object
             val newWorkout = Workout(
-                id = 0,
-                type = type.name,
+                id = 0, // 0 means auto-generate ID
+                type = type.name, // Storing type name as String
+                // FIX: Use LocalDateTime.now() instead of System.currentTimeMillis()
                 date = LocalDateTime.now(),
                 durationMinutes = 0,
                 caloriesBurned = 0,
+                // NEW: Initialize distanceMeters to 0
+                distanceMeters = 0,
                 notes = ""
             )
 
