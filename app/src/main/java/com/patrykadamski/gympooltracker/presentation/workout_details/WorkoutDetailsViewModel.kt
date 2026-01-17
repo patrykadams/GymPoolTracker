@@ -9,6 +9,8 @@ import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
 import com.patrykadamski.gympooltracker.domain.repository.WorkoutRepository
 import com.patrykadamski.gympooltracker.domain.usecase.SaveWorkoutAsRoutineUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +20,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// FIX: Renamed class from WorkoutDetailsViewModel to WorkoutDetailsVM to bypass Hilt cache issue
 @HiltViewModel
 class WorkoutDetailsVM @Inject constructor(
     private val repository: WorkoutRepository,
@@ -30,6 +31,12 @@ class WorkoutDetailsVM @Inject constructor(
 
     private val _uiState = MutableStateFlow(WorkoutDetailsUiState())
     val uiState = _uiState.asStateFlow()
+
+    // NEW: Timer State
+    private val _timerState = MutableStateFlow(TimerState())
+    val timerState = _timerState.asStateFlow()
+
+    private var timerJob: Job? = null
 
     val workoutDetails: StateFlow<WorkoutDetails?> = repository.getWorkoutDetails(workoutId)
         .stateIn(
@@ -76,13 +83,25 @@ class WorkoutDetailsVM @Inject constructor(
         }
     }
 
+    // NEW: Toggle set completion and start timer if completed
+    fun toggleSetCompletion(set: GymSet, isCompleted: Boolean) {
+        val updatedSet = set.copy(isCompleted = isCompleted)
+        updateSet(updatedSet)
+
+        if (isCompleted) {
+            startTimer(set.restSeconds)
+        } else {
+            // Optional: Cancel timer if unchecked?
+            // cancelTimer()
+        }
+    }
+
     fun deleteSet(set: GymSet) {
         viewModelScope.launch {
             repository.deleteSet(set)
         }
     }
 
-    // NEW: Update workout distance (for Swimming)
     fun updateDistance(distance: Int) {
         val currentDetails = workoutDetails.value ?: return
         val updatedWorkout = currentDetails.workout.copy(distanceMeters = distance)
@@ -90,6 +109,35 @@ class WorkoutDetailsVM @Inject constructor(
             repository.insertWorkout(updatedWorkout)
         }
     }
+
+    // --- Timer Logic ---
+
+    fun startTimer(seconds: Int) {
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
+            _timerState.value = TimerState(remainingSeconds = seconds, isRunning = true, totalSeconds = seconds)
+            while (_timerState.value.remainingSeconds > 0) {
+                delay(1000L)
+                _timerState.value = _timerState.value.copy(
+                    remainingSeconds = _timerState.value.remainingSeconds - 1
+                )
+            }
+            _timerState.value = _timerState.value.copy(isRunning = false)
+        }
+    }
+
+    fun cancelTimer() {
+        timerJob?.cancel()
+        _timerState.value = _timerState.value.copy(isRunning = false)
+    }
+
+    fun addTime(seconds: Int) {
+        _timerState.value = _timerState.value.copy(
+            remainingSeconds = _timerState.value.remainingSeconds + seconds
+        )
+    }
+
+    // --- Routine Dialog ---
 
     fun showSaveRoutineDialog() {
         _uiState.value = _uiState.value.copy(isSaveRoutineDialogVisible = true)
@@ -111,4 +159,10 @@ class WorkoutDetailsVM @Inject constructor(
 
 data class WorkoutDetailsUiState(
     val isSaveRoutineDialogVisible: Boolean = false
+)
+
+data class TimerState(
+    val remainingSeconds: Int = 0,
+    val totalSeconds: Int = 0,
+    val isRunning: Boolean = false
 )

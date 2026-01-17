@@ -1,6 +1,10 @@
 // file: app/src/main/java/com/patrykadamski/gympooltracker/presentation/workout_details/WorkoutDetailsScreen.kt
 package com.patrykadamski.gympooltracker.presentation.workout_details
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,14 +12,18 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.patrykadamski.gympooltracker.domain.model.GymSet
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
 import com.patrykadamski.gympooltracker.domain.model.WorkoutExercise
 
@@ -23,13 +31,12 @@ import com.patrykadamski.gympooltracker.domain.model.WorkoutExercise
 @Composable
 fun WorkoutDetailsScreen(
     onNavigateUp: () -> Unit,
-    // FIX: Updated to use the renamed ViewModel class 'WorkoutDetailsVM'
     viewModel: WorkoutDetailsVM = hiltViewModel()
 ) {
     val workoutDetails by viewModel.workoutDetails.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
+    val timerState by viewModel.timerState.collectAsState()
 
-    // For saving routine dialog
     var showMenu by remember { mutableStateOf(false) }
 
     if (uiState.isSaveRoutineDialogVisible) {
@@ -68,9 +75,17 @@ fun WorkoutDetailsScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { /* TODO: Show dialog to add new exercise */ }) {
+            FloatingActionButton(onClick = { viewModel.addExercise("New Exercise") /* Placeholder */ }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add Exercise")
             }
+        },
+        // NEW: Bottom Bar for Timer
+        bottomBar = {
+            RestTimerOverlay(
+                timerState = timerState,
+                onCancel = { viewModel.cancelTimer() },
+                onAdd10s = { viewModel.addTime(10) }
+            )
         }
     ) { paddingValues ->
         val details = workoutDetails
@@ -83,10 +98,9 @@ fun WorkoutDetailsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(bottom = 80.dp, top = 16.dp, start = 16.dp, end = 16.dp), // Extra bottom padding for timer
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // NEW: Show Distance Card only if it's a swimming workout
                 if (isSwimmingWorkout(details.workout.type)) {
                     item {
                         SwimmingDistanceCard(
@@ -103,6 +117,7 @@ fun WorkoutDetailsScreen(
                         exercise = exercise,
                         onAddSet = { viewModel.addSet(exercise.id, exercise.sets.size) },
                         onUpdateSet = { set -> viewModel.updateSet(set) },
+                        onToggleSet = { set, isChecked -> viewModel.toggleSetCompletion(set, isChecked) },
                         onDeleteSet = { set -> viewModel.deleteSet(set) },
                         onDeleteExercise = { viewModel.deleteExercise(exercise.id) }
                     )
@@ -112,7 +127,6 @@ fun WorkoutDetailsScreen(
     }
 }
 
-// NEW: Helper function to check workout type (Gym vs Pool)
 fun isSwimmingWorkout(type: String): Boolean {
     return type.contains("pool", ignoreCase = true) ||
             type.contains("swimming", ignoreCase = true) ||
@@ -120,13 +134,11 @@ fun isSwimmingWorkout(type: String): Boolean {
             type.contains("pływanie", ignoreCase = true)
 }
 
-// NEW: Composable component for editing swimming distance
 @Composable
 fun SwimmingDistanceCard(
     distance: Int,
     onDistanceChange: (Int) -> Unit
 ) {
-    // Local state to handle text input smoothly
     var textValue by remember(distance) { mutableStateOf(distance.toString()) }
 
     Card(
@@ -145,7 +157,6 @@ fun SwimmingDistanceCard(
             OutlinedTextField(
                 value = textValue,
                 onValueChange = { newValue ->
-                    // Allow only digits
                     if (newValue.all { it.isDigit() }) {
                         textValue = newValue
                         onDistanceChange(newValue.toIntOrNull() ?: 0)
@@ -161,11 +172,75 @@ fun SwimmingDistanceCard(
 }
 
 @Composable
+fun RestTimerOverlay(
+    timerState: TimerState,
+    onCancel: () -> Unit,
+    onAdd10s: () -> Unit
+) {
+    AnimatedVisibility(
+        visible = timerState.isRunning,
+        enter = slideInVertically { it },
+        exit = slideOutVertically { it }
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.inverseSurface,
+            shadowElevation = 8.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Timer,
+                        contentDescription = "Timer",
+                        tint = MaterialTheme.colorScheme.inverseOnSurface
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = "Rest: ${formatTime(timerState.remainingSeconds)}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.inverseOnSurface
+                    )
+                }
+
+                Row {
+                    TextButton(onClick = onAdd10s) {
+                        Text("+10s", color = MaterialTheme.colorScheme.inverseOnSurface)
+                    }
+                    IconButton(onClick = onCancel) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel",
+                            tint = MaterialTheme.colorScheme.inverseOnSurface
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+fun formatTime(seconds: Int): String {
+    val m = seconds / 60
+    val s = seconds % 60
+    return "%02d:%02d".format(m, s)
+}
+
+@Composable
 fun ExerciseItem(
     exercise: WorkoutExercise,
     onAddSet: () -> Unit,
-    onUpdateSet: (com.patrykadamski.gympooltracker.domain.model.GymSet) -> Unit,
-    onDeleteSet: (com.patrykadamski.gympooltracker.domain.model.GymSet) -> Unit,
+    onUpdateSet: (GymSet) -> Unit,
+    onToggleSet: (GymSet, Boolean) -> Unit,
+    onDeleteSet: (GymSet) -> Unit,
     onDeleteExercise: () -> Unit
 ) {
     Card(
@@ -183,48 +258,115 @@ fun ExerciseItem(
                     style = MaterialTheme.typography.titleMedium
                 )
                 IconButton(onClick = onDeleteExercise) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert, // Using MoreVert as placeholder for delete menu or direct delete icon
-                        contentDescription = "Delete Exercise"
-                    )
+                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Delete Exercise")
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // Header row
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Set", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "#", modifier = Modifier.width(30.dp), style = MaterialTheme.typography.bodySmall)
                 Text(text = "Reps", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                Text(text = "Weight", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                Text(text = "", modifier = Modifier.width(48.dp)) // Placeholder for delete button
+                Text(text = "Kg", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.width(40.dp)) // For Checkbox
+                Spacer(modifier = Modifier.width(40.dp)) // For Delete
             }
 
             exercise.sets.forEachIndexed { index, set ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "${index + 1}", modifier = Modifier.weight(1f))
-                    Text(text = set.reps, modifier = Modifier.weight(1f))
-                    Text(text = "${set.weight} kg", modifier = Modifier.weight(1f))
-                    // Simplification: In a real app, these Texts would be TextFields to allow editing
-
-                    IconButton(onClick = { onDeleteSet(set) }, modifier = Modifier.size(24.dp)) {
-                        // Simple 'X' or delete icon
-                        Text("x", color = MaterialTheme.colorScheme.error)
-                    }
-                }
+                SetRow(
+                    index = index + 1,
+                    set = set,
+                    onUpdate = onUpdateSet,
+                    onToggle = onToggleSet,
+                    onDelete = onDeleteSet
+                )
             }
 
             Button(
                 onClick = onAddSet,
-                modifier = Modifier.align(Alignment.End).padding(top = 8.dp)
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(top = 8.dp)
             ) {
                 Text("Add Set")
             }
+        }
+    }
+}
+
+@Composable
+fun SetRow(
+    index: Int,
+    set: GymSet,
+    onUpdate: (GymSet) -> Unit,
+    onToggle: (GymSet, Boolean) -> Unit,
+    onDelete: (GymSet) -> Unit
+) {
+    // NEW: TextFields for editing values directly
+    var repsText by remember(set.reps) { mutableStateOf(set.reps) }
+    var weightText by remember(set.weight) { mutableStateOf(set.weight.toString()) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "$index",
+            modifier = Modifier.width(30.dp),
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        // Reps Input
+        OutlinedTextField(
+            value = repsText,
+            onValueChange = {
+                repsText = it
+                onUpdate(set.copy(reps = it))
+            },
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp)
+        )
+
+        // Weight Input
+        OutlinedTextField(
+            value = weightText,
+            onValueChange = {
+                weightText = it
+                val newWeight = it.toDoubleOrNull() ?: 0.0
+                onUpdate(set.copy(weight = newWeight))
+            },
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 8.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp)
+        )
+
+        // NEW: Checkbox for completion
+        Checkbox(
+            checked = set.isCompleted,
+            onCheckedChange = { isChecked ->
+                onToggle(set, isChecked)
+            }
+        )
+
+        IconButton(onClick = { onDelete(set) }) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Delete Set",
+                tint = MaterialTheme.colorScheme.error
+            )
         }
     }
 }
