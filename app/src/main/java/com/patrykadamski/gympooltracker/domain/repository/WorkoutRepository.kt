@@ -1,46 +1,19 @@
-// file: app/src/main/java/com/patrykadamski/gympooltracker/domain/repository/WorkoutRepository.kt
 package com.patrykadamski.gympooltracker.domain.repository
 
-import com.patrykadamski.gympooltracker.domain.model.GymSet
 import com.patrykadamski.gympooltracker.domain.model.Workout
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
-import com.patrykadamski.gympooltracker.domain.model.WorkoutType
 import kotlinx.coroutines.flow.Flow
 
 interface WorkoutRepository {
-    fun getWorkouts(): Flow<List<Workout>>
-
-    suspend fun getWorkoutById(id: Int): Workout?
-
+    fun getAllWorkouts(): Flow<List<Workout>>
     fun getWorkoutDetails(workoutId: Int): Flow<WorkoutDetails?>
 
-    suspend fun insertWorkout(workout: Workout): Long
+    suspend fun createWorkout(type: String): Int
 
-    suspend fun deleteWorkout(workout: Workout)
-
-    fun getWorkoutTypes(): Flow<List<WorkoutType>>
-
-    fun getExerciseNames(): Flow<List<String>>
-
-    // --- Personal Record & History ---
-    fun getPersonalRecord(exerciseName: String): Flow<Double?>
-
-    // NEW: Get last set for suggestion
-    suspend fun getLastSetForExercise(exerciseName: String): GymSet?
-
-    // --- Exercise and Set Management ---
-
-    suspend fun addExercise(workoutId: Int, name: String): Long
-    suspend fun deleteExercise(exerciseId: Long, workoutId: Int)
-
-    suspend fun addSet(
-        exerciseId: Long,
-        setNumber: Int,
-        reps: String = "0",
-        weight: Double = 0.0,
-        restSeconds: Int = 60
-    ): Long
-
-    suspend fun updateSet(set: GymSet)
-    suspend fun deleteSet(set: GymSet)
+    // New methods for logging
+    suspend fun addExercise(workoutId: Int, name: String)
+    suspend fun addSet(exerciseId: Int)
+    suspend fun updateSet(setId: Int, reps: String, weight: Double, isCompleted: Boolean)
+    suspend fun deleteSet(setId: Int)
+    suspend fun deleteExercise(exerciseId: Int)
 }
