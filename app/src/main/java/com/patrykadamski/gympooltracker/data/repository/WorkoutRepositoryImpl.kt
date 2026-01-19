@@ -6,6 +6,8 @@ import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
 import com.patrykadamski.gympooltracker.domain.repository.WorkoutRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 
 class WorkoutRepositoryImpl @Inject constructor(
@@ -19,7 +21,10 @@ class WorkoutRepositoryImpl @Inject constructor(
                 Workout(
                     id = entity.id.toInt(),
                     type = entity.type,
-                    date = entity.date,
+                    // FIX: Konwersja Long (milisekundy) -> LocalDateTime
+                    date = Instant.ofEpochMilli(entity.date)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime(),
                     duration = entity.duration,
                     calories = entity.calories
                 )
@@ -34,7 +39,10 @@ class WorkoutRepositoryImpl @Inject constructor(
                     workout = Workout(
                         id = it.workout.id.toInt(),
                         type = it.workout.type,
-                        date = it.workout.date,
+                        // FIX: Konwersja Long (milisekundy) -> LocalDateTime
+                        date = Instant.ofEpochMilli(it.workout.date)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime(),
                         duration = it.workout.duration,
                         calories = it.workout.calories
                     ),
@@ -47,7 +55,7 @@ class WorkoutRepositoryImpl @Inject constructor(
     override suspend fun createWorkout(type: String): Int {
         val entity = WorkoutEntity(
             type = type,
-            date = System.currentTimeMillis(),
+            date = System.currentTimeMillis(), // Tutaj zapisujemy jako Long, to jest OK dla bazy
             duration = 0,
             calories = 0
         )
@@ -68,7 +76,7 @@ class WorkoutRepositoryImpl @Inject constructor(
         // Default values for a new set
         val newSet = SetEntity(
             exerciseId = exerciseId,
-            setNumber = 1, // Logic to auto-increment set number can be added later
+            setNumber = 1,
             reps = "",
             weight = 0.0,
             rpe = 0.0,
