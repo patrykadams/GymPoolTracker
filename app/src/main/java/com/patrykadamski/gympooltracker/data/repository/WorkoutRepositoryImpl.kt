@@ -55,7 +55,7 @@ class WorkoutRepositoryImpl @Inject constructor(
     override suspend fun createWorkout(type: String): Int {
         val entity = WorkoutEntity(
             type = type,
-            date = System.currentTimeMillis(), // Tutaj zapisujemy jako Long, to jest OK dla bazy
+            date = System.currentTimeMillis(),
             duration = 0,
             calories = 0
         )

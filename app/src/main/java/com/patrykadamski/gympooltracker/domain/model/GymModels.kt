@@ -1,5 +1,7 @@
 package com.patrykadamski.gympooltracker.domain.model
 
+import com.patrykadamski.gympooltracker.data.local.ExerciseWithSets
+
 data class GymSet(
     val id: Long = 0,
     val exerciseId: Long,
@@ -22,5 +24,4 @@ data class GymExercise(
 //
 data class WorkoutDetails(
     val workout: Workout,
-    val exercises: List<WorkoutExercise>
-)
+    val exercises: List<ExerciseWithSets> )
