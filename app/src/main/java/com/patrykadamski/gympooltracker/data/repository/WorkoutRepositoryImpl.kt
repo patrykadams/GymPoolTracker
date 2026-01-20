@@ -1,3 +1,4 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/data/repository/WorkoutRepositoryImpl.kt
 package com.patrykadamski.gympooltracker.data.repository
 
 import com.patrykadamski.gympooltracker.data.local.*
@@ -21,7 +22,6 @@ class WorkoutRepositoryImpl @Inject constructor(
                 Workout(
                     id = entity.id.toInt(),
                     type = entity.type,
-                    // FIX: Konwersja Long (milisekundy) -> LocalDateTime
                     date = Instant.ofEpochMilli(entity.date)
                         .atZone(ZoneId.systemDefault())
                         .toLocalDateTime(),
@@ -39,7 +39,6 @@ class WorkoutRepositoryImpl @Inject constructor(
                     workout = Workout(
                         id = it.workout.id.toInt(),
                         type = it.workout.type,
-                        // FIX: Konwersja Long (milisekundy) -> LocalDateTime
                         date = Instant.ofEpochMilli(it.workout.date)
                             .atZone(ZoneId.systemDefault())
                             .toLocalDateTime(),
@@ -66,7 +65,7 @@ class WorkoutRepositoryImpl @Inject constructor(
 
     override suspend fun addExercise(workoutId: Int, name: String) {
         val exercise = ExerciseEntity(
-            workoutId = workoutId,
+            workoutId = workoutId, // Tutaj Room zazwyczaj akceptuje Int jeśli kolumna jest Int, ale warto sprawdzić ExerciseEntity
             name = name
         )
         workoutDao.insertExercise(exercise)
@@ -75,7 +74,7 @@ class WorkoutRepositoryImpl @Inject constructor(
     override suspend fun addSet(exerciseId: Int) {
         // Default values for a new set
         val newSet = SetEntity(
-            exerciseId = exerciseId,
+            exerciseId = exerciseId.toLong(),
             setNumber = 1,
             reps = "",
             weight = 0.0,

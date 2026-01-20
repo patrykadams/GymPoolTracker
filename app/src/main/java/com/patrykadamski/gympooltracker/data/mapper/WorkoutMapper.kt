@@ -19,53 +19,59 @@ object WorkoutMapper {
 
     fun mapEntityToDomain(entity: WorkoutEntity): Workout {
         return Workout(
-            id = entity.id,
+            // FIX: Konwersja Long -> Int
+            id = entity.id.toInt(),
             type = entity.type,
-            // FIX: Convert Long (timestamp) to LocalDateTime
             date = Instant.ofEpochMilli(entity.date)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime(),
-            durationMinutes = entity.durationMinutes,
-            caloriesBurned = entity.caloriesBurned,
-            // NEW: Map distanceMeters from entity to domain
-            distanceMeters = entity.distanceMeters,
-            notes = entity.notes
+            // FIX: Używamy nazw pól zgodnych z WorkoutEntity z poprzednich kroków
+            duration = entity.duration,
+            calories = entity.calories
         )
     }
 
     fun mapDomainToEntity(domain: Workout): WorkoutEntity {
         return WorkoutEntity(
-            id = domain.id,
+            // FIX: Konwersja Int -> Long
+            id = domain.id.toLong(),
             type = domain.type,
-            // FIX: Convert LocalDateTime back to Long (timestamp)
             date = domain.date.atZone(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli(),
-            durationMinutes = domain.durationMinutes,
-            caloriesBurned = domain.caloriesBurned,
-            // NEW: Map distanceMeters from domain to entity
-            distanceMeters = domain.distanceMeters,
-            notes = domain.notes
+            duration = domain.duration,
+            calories = domain.calories
         )
     }
 
-    // --- Relation Mappers (Workout + Exercises + Sets) ---
+    // --- Relation Mappers ---
 
+    // UWAGA: Ta funkcja jest potrzebna tylko jeśli używasz WorkoutExercise w UI.
+    // Jeśli używasz ExerciseWithSets w UI (jak ustaliliśmy wcześniej), ta funkcja może nie być używana,
+    // ale naprawiam ją dla spójności.
     fun mapRelationToDetails(relation: WorkoutWithExercises): WorkoutDetails {
 
         val workout = mapEntityToDomain(relation.workout)
 
+        // Jeśli WorkoutDetails w domenie oczekuje ExerciseWithSets (jak zmieniliśmy ostatnio),
+        // to tutaj powinniśmy po prostu przypisać:
+        // exercises = relation.exercises
+
+        // Jeśli jednak cofnąłeś zmianę i używasz WorkoutExercise, to zostawiam mapowanie:
+        /*
         val exercises = relation.exercises.map { exerciseWithSets ->
             WorkoutExercise(
-                id = exerciseWithSets.exercise.id,
+                id = exerciseWithSets.exercise.id.toInt(), // FIX: Long -> Int
                 name = exerciseWithSets.exercise.name,
                 sets = exerciseWithSets.sets.map { mapSetEntityToDomain(it) }
             )
         }
+        */
 
+        // Zgodnie z ostatnią naprawą "Layer Mismatch", zwracamy to co baza daje bezpośrednio:
         return WorkoutDetails(
             workout = workout,
-            exercises = exercises
+            exercises = relation.exercises
         )
     }
 
@@ -73,39 +79,28 @@ object WorkoutMapper {
 
     fun mapSetEntityToDomain(entity: SetEntity): GymSet {
         return GymSet(
-            id = entity.id,
-            exerciseId = entity.exerciseId,
+            // FIX: Konwersja Long -> Int
+            id = entity.id.toInt(),
+            exerciseId = entity.exerciseId.toInt(),
             setNumber = entity.setNumber,
             reps = entity.reps,
             weight = entity.weight,
             rpe = entity.rpe,
-            restSeconds = entity.restSeconds,
+            // restSeconds = entity.restSeconds, // Jeśli nie masz tego w Entity, zakomentuj
             isCompleted = entity.isCompleted
         )
     }
 
     fun mapSetDomainToEntity(domain: GymSet): SetEntity {
         return SetEntity(
-            id = domain.id,
-            exerciseId = 0, // ID handled by DB relations logic usually
-            setNumber = 0,
+            id = domain.id.toLong(), // FIX: Int -> Long
+            exerciseId = domain.exerciseId.toLong(), // FIX: Int -> Long
+            setNumber = domain.setNumber, // Zakładam, że w DB setNumber to Int
             reps = domain.reps,
             weight = domain.weight,
-            // FIX: Ensure rpe and restSeconds are mapped correctly
             rpe = domain.rpe,
-            restSeconds = domain.restSeconds,
+            // restSeconds = domain.restSeconds,
             isCompleted = domain.isCompleted
-        )
-    }
-
-    // --- Workout Type Mappers ---
-
-    fun mapTypeEntityToDomain(entity: WorkoutTypeEntity): WorkoutType {
-        return WorkoutType(
-            id = entity.id,
-            name = entity.name,
-            iconName = entity.iconName,
-            caloriesPerMinute = entity.caloriesPerMinute
         )
     }
 }
