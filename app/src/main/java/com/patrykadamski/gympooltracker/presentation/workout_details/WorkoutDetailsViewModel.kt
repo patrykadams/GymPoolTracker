@@ -48,7 +48,7 @@ class WorkoutDetailsViewModel @Inject constructor(
     // Called when user clicks "Add Set" button
     fun addSet(exerciseId: Int) {
         viewModelScope.launch {
-            repository.addSet(exerciseId)
+            repository.addSet(exerciseId, exerciseId)
         }
     }
 

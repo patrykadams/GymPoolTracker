@@ -8,7 +8,6 @@ import com.patrykadamski.gympooltracker.data.local.WorkoutWithExercises
 import com.patrykadamski.gympooltracker.domain.model.GymSet
 import com.patrykadamski.gympooltracker.domain.model.Workout
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
-import com.patrykadamski.gympooltracker.domain.model.WorkoutExercise
 import com.patrykadamski.gympooltracker.domain.model.WorkoutType
 import java.time.Instant
 import java.time.ZoneId
@@ -19,13 +18,13 @@ object WorkoutMapper {
 
     fun mapEntityToDomain(entity: WorkoutEntity): Workout {
         return Workout(
-            // FIX: Konwersja Long -> Int
+            // Map Entity ID (Long) to Domain ID (Int)
             id = entity.id.toInt(),
             type = entity.type,
+            // Convert Timestamp (Long) to LocalDateTime
             date = Instant.ofEpochMilli(entity.date)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime(),
-            // FIX: Używamy nazw pól zgodnych z WorkoutEntity z poprzednich kroków
             duration = entity.duration,
             calories = entity.calories
         )
@@ -33,9 +32,10 @@ object WorkoutMapper {
 
     fun mapDomainToEntity(domain: Workout): WorkoutEntity {
         return WorkoutEntity(
-            // FIX: Konwersja Int -> Long
+            // Map Domain ID (Int) to Entity ID (Long)
             id = domain.id.toLong(),
             type = domain.type,
+            // Convert LocalDateTime back to Timestamp (Long)
             date = domain.date.atZone(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli(),
@@ -45,12 +45,11 @@ object WorkoutMapper {
     }
 
     // --- Relation Mappers ---
-    fun mapRelationToDetails(relation: WorkoutWithExercises): WorkoutDetails {
 
+    fun mapRelationToDetails(relation: WorkoutWithExercises): WorkoutDetails {
         val workout = mapEntityToDomain(relation.workout)
 
-
-
+        // Pass the ExerciseWithSets list directly to the domain model
         return WorkoutDetails(
             workout = workout,
             exercises = relation.exercises
@@ -61,26 +60,42 @@ object WorkoutMapper {
 
     fun mapSetEntityToDomain(entity: SetEntity): GymSet {
         return GymSet(
+            // Note: If GymSet.id is Int, keep .toInt(). If Long, remove it.
             id = entity.id.toInt(),
-            exerciseId = entity.exerciseId.toInt(),
+            // FIX: Removed .toInt() as GymSet expects Long for exerciseId
+            exerciseId = entity.exerciseId,
             setNumber = entity.setNumber,
             reps = entity.reps,
             weight = entity.weight,
             rpe = entity.rpe,
-            isCompleted = entity.isCompleted
+             restSeconds = entity.restSeconds,
+            isCompleted = entity.isCompleted,
+
         )
     }
 
     fun mapSetDomainToEntity(domain: GymSet): SetEntity {
         return SetEntity(
-            id = domain.id.toLong(), // FIX: Int -> Long
-            exerciseId = domain.exerciseId.toLong(), // FIX: Int -> Long
+            id = domain.id.toLong(),
+            // FIX: Removed .toLong() as domain.exerciseId is already Long
+            exerciseId = domain.exerciseId,
             setNumber = domain.setNumber,
             reps = domain.reps,
             weight = domain.weight,
             rpe = domain.rpe,
-            // restSeconds = domain.restSeconds,
+            // restSeconds = domain.restSeconds, // Uncomment if property exists in Domain
             isCompleted = domain.isCompleted
+        )
+    }
+
+    // --- Workout Type Mappers ---
+
+    fun mapTypeEntityToDomain(entity: WorkoutTypeEntity): WorkoutType {
+        return WorkoutType(
+            id = entity.id,
+            name = entity.name,
+            iconName = entity.iconName,
+            caloriesPerMinute = entity.caloriesPerMinute
         )
     }
 }

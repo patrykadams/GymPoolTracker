@@ -71,7 +71,7 @@ class WorkoutRepositoryImpl @Inject constructor(
         workoutDao.insertExercise(exercise)
     }
 
-    override suspend fun addSet(exerciseId: Int) {
+    override suspend fun addSet(exerciseId1: Long, exerciseId: Int) {
         // Default values for a new set
         val newSet = SetEntity(
             exerciseId = exerciseId.toLong(),

@@ -3,7 +3,7 @@ package com.patrykadamski.gympooltracker.domain.model
 import com.patrykadamski.gympooltracker.data.local.ExerciseWithSets
 
 data class GymSet(
-    val id: Long = 0,
+    val id: Int = 0,
     val exerciseId: Long,
     val setNumber: Int,
     val reps: String,

@@ -12,7 +12,7 @@ interface WorkoutRepository {
 
     // New methods for logging
     suspend fun addExercise(workoutId: Int, name: String)
-    suspend fun addSet(exerciseId: Int)
+    suspend fun addSet(exerciseId1: Long, exerciseId: Int)
     suspend fun updateSet(setId: Int, reps: String, weight: Double, isCompleted: Boolean)
     suspend fun deleteSet(setId: Int)
     suspend fun deleteExercise(exerciseId: Int)
