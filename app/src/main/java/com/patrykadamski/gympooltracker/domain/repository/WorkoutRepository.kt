@@ -5,15 +5,17 @@ import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
 import kotlinx.coroutines.flow.Flow
 
 interface WorkoutRepository {
+    // Queries
     fun getAllWorkouts(): Flow<List<Workout>>
     fun getWorkoutDetails(workoutId: Int): Flow<WorkoutDetails?>
 
+    // Commands
     suspend fun createWorkout(type: String): Int
 
-    // New methods for logging
+    // Logging Commands (Updated to accept Long IDs for consistency with Database Entities)
     suspend fun addExercise(workoutId: Int, name: String)
-    suspend fun addSet(exerciseId1: Long, exerciseId: Int)
-    suspend fun updateSet(setId: Int, reps: String, weight: Double, isCompleted: Boolean)
-    suspend fun deleteSet(setId: Int)
-    suspend fun deleteExercise(exerciseId: Int)
+    suspend fun addSet(exerciseId: Long)
+    suspend fun updateSet(setId: Long, reps: String, weight: Double, isCompleted: Boolean)
+    suspend fun deleteSet(setId: Long)
+    suspend fun deleteExercise(exerciseId: Long)
 }

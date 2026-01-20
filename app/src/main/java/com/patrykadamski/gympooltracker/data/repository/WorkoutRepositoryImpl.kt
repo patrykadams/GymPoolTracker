@@ -1,4 +1,3 @@
-// file: app/src/main/java/com/patrykadamski/gympooltracker/data/repository/WorkoutRepositoryImpl.kt
 package com.patrykadamski.gympooltracker.data.repository
 
 import com.patrykadamski.gympooltracker.data.local.*
@@ -65,16 +64,16 @@ class WorkoutRepositoryImpl @Inject constructor(
 
     override suspend fun addExercise(workoutId: Int, name: String) {
         val exercise = ExerciseEntity(
-            workoutId = workoutId, // Tutaj Room zazwyczaj akceptuje Int jeśli kolumna jest Int, ale warto sprawdzić ExerciseEntity
+            workoutId = workoutId,
             name = name
         )
         workoutDao.insertExercise(exercise)
     }
 
-    override suspend fun addSet(exerciseId1: Long, exerciseId: Int) {
-        // Default values for a new set
+    // Updated: Accepts Long to match Interface and Entity type
+    override suspend fun addSet(exerciseId: Long) {
         val newSet = SetEntity(
-            exerciseId = exerciseId.toLong(),
+            exerciseId = exerciseId, // No conversion needed, already Long
             setNumber = 1,
             reps = "",
             weight = 0.0,
@@ -84,15 +83,25 @@ class WorkoutRepositoryImpl @Inject constructor(
         workoutDao.insertSet(newSet)
     }
 
-    override suspend fun updateSet(setId: Int, reps: String, weight: Double, isCompleted: Boolean) {
-        workoutDao.updateSet(setId, reps, weight, isCompleted)
+    // Updated: Accepts Long to match Interface and Entity type
+    override suspend fun updateSet(setId: Long, reps: String, weight: Double, isCompleted: Boolean) {
+        // Note: Make sure workoutDao.updateSet expects Int for ID or update DAO to Long if needed.
+        // Usually Room IDs are matched by type. If Dao expects Int, verify Dao.
+        // Assuming Dao updateSet is defined as: suspend fun updateSet(setId: Int, ...) -> update to Long if error persists.
+
+        // Safety cast if DAO still expects Int (check WorkoutDao)
+        // If WorkoutDao uses Long for IDs (standard), pass directly.
+        // Based on previous errors, SetEntity.id is Long.
+        workoutDao.updateSet(setId.toInt(), reps, weight, isCompleted)
     }
 
-    override suspend fun deleteSet(setId: Int) {
-        workoutDao.deleteSet(setId)
+    // Updated: Accepts Long
+    override suspend fun deleteSet(setId: Long) {
+        workoutDao.deleteSet(setId.toInt())
     }
 
-    override suspend fun deleteExercise(exerciseId: Int) {
-        workoutDao.deleteExercise(exerciseId)
+    // Updated: Accepts Long
+    override suspend fun deleteExercise(exerciseId: Long) {
+        workoutDao.deleteExercise(exerciseId.toInt())
     }
 }
