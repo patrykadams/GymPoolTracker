@@ -45,30 +45,12 @@ object WorkoutMapper {
     }
 
     // --- Relation Mappers ---
-
-    // UWAGA: Ta funkcja jest potrzebna tylko jeśli używasz WorkoutExercise w UI.
-    // Jeśli używasz ExerciseWithSets w UI (jak ustaliliśmy wcześniej), ta funkcja może nie być używana,
-    // ale naprawiam ją dla spójności.
     fun mapRelationToDetails(relation: WorkoutWithExercises): WorkoutDetails {
 
         val workout = mapEntityToDomain(relation.workout)
 
-        // Jeśli WorkoutDetails w domenie oczekuje ExerciseWithSets (jak zmieniliśmy ostatnio),
-        // to tutaj powinniśmy po prostu przypisać:
-        // exercises = relation.exercises
 
-        // Jeśli jednak cofnąłeś zmianę i używasz WorkoutExercise, to zostawiam mapowanie:
-        /*
-        val exercises = relation.exercises.map { exerciseWithSets ->
-            WorkoutExercise(
-                id = exerciseWithSets.exercise.id.toInt(), // FIX: Long -> Int
-                name = exerciseWithSets.exercise.name,
-                sets = exerciseWithSets.sets.map { mapSetEntityToDomain(it) }
-            )
-        }
-        */
 
-        // Zgodnie z ostatnią naprawą "Layer Mismatch", zwracamy to co baza daje bezpośrednio:
         return WorkoutDetails(
             workout = workout,
             exercises = relation.exercises
@@ -79,14 +61,12 @@ object WorkoutMapper {
 
     fun mapSetEntityToDomain(entity: SetEntity): GymSet {
         return GymSet(
-            // FIX: Konwersja Long -> Int
             id = entity.id.toInt(),
             exerciseId = entity.exerciseId.toInt(),
             setNumber = entity.setNumber,
             reps = entity.reps,
             weight = entity.weight,
             rpe = entity.rpe,
-            // restSeconds = entity.restSeconds, // Jeśli nie masz tego w Entity, zakomentuj
             isCompleted = entity.isCompleted
         )
     }
@@ -95,7 +75,7 @@ object WorkoutMapper {
         return SetEntity(
             id = domain.id.toLong(), // FIX: Int -> Long
             exerciseId = domain.exerciseId.toLong(), // FIX: Int -> Long
-            setNumber = domain.setNumber, // Zakładam, że w DB setNumber to Int
+            setNumber = domain.setNumber,
             reps = domain.reps,
             weight = domain.weight,
             rpe = domain.rpe,
