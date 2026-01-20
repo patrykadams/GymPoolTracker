@@ -1,3 +1,4 @@
+// file: app/src/main/java/com/patrykadamski/gympooltracker/presentation/workout_details/WorkoutDetailsViewModel.kt
 package com.patrykadamski.gympooltracker.presentation.workout_details
 
 import androidx.lifecycle.SavedStateHandle
@@ -18,7 +19,7 @@ class WorkoutDetailsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    // Holds the current state of the workout (exercises, sets, etc.)
+    // State holding the workout details (workout info + exercises + sets)
     private val _state = MutableStateFlow<WorkoutDetails?>(null)
     val state: StateFlow<WorkoutDetails?> = _state.asStateFlow()
 
@@ -48,28 +49,32 @@ class WorkoutDetailsViewModel @Inject constructor(
     // Called when user clicks "Add Set" button
     fun addSet(exerciseId: Int) {
         viewModelScope.launch {
-            repository.addSet(exerciseId, exerciseId)
+            // FIX: Convert Int to Long (Repository expects Long)
+            repository.addSet(exerciseId.toLong())
         }
     }
 
     // Called when user changes weight, reps, or completion status
     fun updateSet(setId: Int, reps: String, weight: Double, isCompleted: Boolean) {
         viewModelScope.launch {
-            repository.updateSet(setId, reps, weight, isCompleted)
+            // FIX: Convert Int to Long (Repository expects Long)
+            repository.updateSet(setId.toLong(), reps, weight, isCompleted)
         }
     }
 
     // Called when user swipes or clicks delete on a set
     fun deleteSet(setId: Int) {
         viewModelScope.launch {
-            repository.deleteSet(setId)
+            // FIX: Convert Int to Long (Repository expects Long)
+            repository.deleteSet(setId.toLong())
         }
     }
 
     // Called when user deletes an entire exercise
     fun deleteExercise(exerciseId: Int) {
         viewModelScope.launch {
-            repository.deleteExercise(exerciseId)
+            // FIX: Convert Int to Long (Repository expects Long)
+            repository.deleteExercise(exerciseId.toLong())
         }
     }
 }
