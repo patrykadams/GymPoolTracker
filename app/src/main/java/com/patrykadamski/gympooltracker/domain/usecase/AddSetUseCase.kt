@@ -1,21 +1,13 @@
 package com.patrykadamski.gympooltracker.domain.usecase
 
 import com.patrykadamski.gympooltracker.domain.repository.WorkoutRepository
+import javax.inject.Inject
 
-/**
- * Use case to add a new set.
- * Now supports optional parameters to enable "Smart Add" functionality (copying previous set data).
- */
-class AddSetUseCase(
+class AddSetUseCase @Inject constructor(
     private val repository: WorkoutRepository
 ) {
-    suspend operator fun invoke(
-        exerciseId: Long,
-        setNumber: Int,
-        reps: String = "0",
-        weight: Double = 0.0,
-        restSeconds: Int = 60
-    ) {
-        repository.addSet(exerciseId, setNumber, reps, weight, restSeconds)
+    // FIX: Updated to accept only exerciseId (Long), matching the Repository signature
+    suspend operator fun invoke(exerciseId: Long) {
+        repository.addSet(exerciseId)
     }
 }
