@@ -74,7 +74,7 @@ class WorkoutDetailsViewModel @Inject constructor(
     fun deleteExercise(exerciseId: Int) {
         viewModelScope.launch {
             // FIX: Convert Int to Long (Repository expects Long)
-            repository.deleteExercise(exerciseId.toLong())
+            repository.deleteExercise(exerciseId.toLong(), workoutId)
         }
     }
 }

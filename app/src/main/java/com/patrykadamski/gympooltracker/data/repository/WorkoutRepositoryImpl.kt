@@ -101,7 +101,7 @@ class WorkoutRepositoryImpl @Inject constructor(
     }
 
     // Updated: Accepts Long
-    override suspend fun deleteExercise(exerciseId: Long) {
+    override suspend fun deleteExercise(exerciseId: Long, workoutId: Int) {
         workoutDao.deleteExercise(exerciseId.toInt())
     }
 }

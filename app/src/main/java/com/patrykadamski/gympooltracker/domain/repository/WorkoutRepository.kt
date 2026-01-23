@@ -17,5 +17,5 @@ interface WorkoutRepository {
     suspend fun addSet(exerciseId: Long)
     suspend fun updateSet(setId: Long, reps: String, weight: Double, isCompleted: Boolean)
     suspend fun deleteSet(setId: Long)
-    suspend fun deleteExercise(exerciseId: Long)
+    suspend fun deleteExercise(exerciseId: Long, workoutId: Int)
 }
