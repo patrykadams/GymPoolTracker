@@ -12,10 +12,13 @@ interface WorkoutRepository {
     // Commands
     suspend fun createWorkout(type: String): Int
 
-    // Logging Commands (Updated to accept Long IDs for consistency with Database Entities)
+    // FIX: Added deleteWorkout method
+    suspend fun deleteWorkout(workoutId: Int)
+
+    // Logging Commands
     suspend fun addExercise(workoutId: Int, name: String)
     suspend fun addSet(exerciseId: Long)
     suspend fun updateSet(setId: Long, reps: String, weight: Double, isCompleted: Boolean)
     suspend fun deleteSet(setId: Long)
-    suspend fun deleteExercise(exerciseId: Long, workoutId: Int)
+    suspend fun deleteExercise(exerciseId: Long)
 }

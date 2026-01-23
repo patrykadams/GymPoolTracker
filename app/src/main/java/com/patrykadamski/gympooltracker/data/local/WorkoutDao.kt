@@ -16,6 +16,10 @@ interface WorkoutDao {
     @Query("SELECT * FROM workouts WHERE id = :workoutId")
     fun getWorkoutWithExercises(workoutId: Int): Flow<WorkoutWithExercises?>
 
+    // FIX: Added delete query
+    @Query("DELETE FROM workouts WHERE id = :workoutId")
+    suspend fun deleteWorkout(workoutId: Long)
+
     // --- Exercises ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExercise(exercise: ExerciseEntity): Long
