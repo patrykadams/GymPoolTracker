@@ -8,6 +8,7 @@ class DeleteWorkoutUseCase @Inject constructor(
     private val repository: WorkoutRepository
 ) {
     suspend operator fun invoke(workout: Workout) {
-        repository.deleteWorkout(workout)
+        // FIX: Pass 'workout.id' instead of the whole 'workout' object
+        repository.deleteWorkout(workout.id)
     }
 }

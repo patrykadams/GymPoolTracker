@@ -71,10 +71,10 @@ class WorkoutDetailsViewModel @Inject constructor(
     }
 
     // Called when user deletes an entire exercise
+    // Called when user deletes an entire exercise
     fun deleteExercise(exerciseId: Int) {
         viewModelScope.launch {
-            // FIX: Convert Int to Long (Repository expects Long)
-            repository.deleteExercise(exerciseId.toLong(), workoutId)
+            // FIX: Removed 'workoutId' argument. Only pass the exerciseId.
+            repository.deleteExercise(exerciseId.toLong())
         }
-    }
-}
+    }}
