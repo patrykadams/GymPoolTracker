@@ -1,6 +1,7 @@
 package com.patrykadamski.gympooltracker.data.repository
 
 import com.patrykadamski.gympooltracker.data.local.*
+import com.patrykadamski.gympooltracker.domain.model.GymSet
 import com.patrykadamski.gympooltracker.domain.model.Workout
 import com.patrykadamski.gympooltracker.domain.model.WorkoutDetails
 import com.patrykadamski.gympooltracker.domain.repository.WorkoutRepository
@@ -50,9 +51,29 @@ class WorkoutRepositoryImpl @Inject constructor(
         }
     }
 
-    // FIX: Implemented getExerciseNames
     override fun getExerciseNames(): Flow<List<String>> {
         return workoutDao.getExerciseNames()
+    }
+
+    override suspend fun getLastSetForExercise(exerciseName: String): GymSet? {
+        val entity = workoutDao.getLastSetForExercise(exerciseName)
+        return entity?.let {
+            GymSet(
+                id = it.id.toInt(),
+                exerciseId = it.exerciseId,
+                setNumber = it.setNumber,
+                reps = it.reps,
+                weight = it.weight,
+                rpe = it.rpe,
+                isCompleted = it.isCompleted,
+                restSeconds = it.restSeconds
+            )
+        }
+    }
+
+    // FIX: Implemented getPersonalRecord
+    override fun getPersonalRecord(exerciseName: String): Flow<Double?> {
+        return workoutDao.getPersonalRecord(exerciseName)
     }
 
     override suspend fun createWorkout(type: String): Int {
@@ -68,8 +89,6 @@ class WorkoutRepositoryImpl @Inject constructor(
     override suspend fun deleteWorkout(workoutId: Int) {
         workoutDao.deleteWorkout(workoutId.toLong())
     }
-
-    // --- Logging Implementations ---
 
     override suspend fun addExercise(workoutId: Int, name: String) {
         val exercise = ExerciseEntity(

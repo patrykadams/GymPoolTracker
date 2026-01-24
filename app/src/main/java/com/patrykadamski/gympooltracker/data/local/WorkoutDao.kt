@@ -26,7 +26,6 @@ interface WorkoutDao {
     @Query("DELETE FROM exercises WHERE id = :exerciseId")
     suspend fun deleteExercise(exerciseId: Int)
 
-    // FIX: Added query to get unique exercise names for autocomplete
     @Query("SELECT DISTINCT name FROM exercises ORDER BY name ASC")
     fun getExerciseNames(): Flow<List<String>>
 
@@ -39,4 +38,22 @@ interface WorkoutDao {
 
     @Query("DELETE FROM sets WHERE id = :setId")
     suspend fun deleteSet(setId: Int)
+
+    @Query("""
+        SELECT s.* FROM sets s
+        INNER JOIN exercises e ON s.exerciseId = e.id
+        INNER JOIN workouts w ON e.workoutId = w.id
+        WHERE e.name = :exerciseName
+        ORDER BY w.date DESC, s.id DESC
+        LIMIT 1
+    """)
+    suspend fun getLastSetForExercise(exerciseName: String): SetEntity?
+
+    // FIX: Added query to calculate Personal Record (Max Weight)
+    @Query("""
+        SELECT MAX(s.weight) FROM sets s
+        INNER JOIN exercises e ON s.exerciseId = e.id
+        WHERE e.name = :exerciseName
+    """)
+    fun getPersonalRecord(exerciseName: String): Flow<Double?>
 }
