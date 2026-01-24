@@ -16,7 +16,6 @@ interface WorkoutDao {
     @Query("SELECT * FROM workouts WHERE id = :workoutId")
     fun getWorkoutWithExercises(workoutId: Int): Flow<WorkoutWithExercises?>
 
-    // FIX: Added delete query
     @Query("DELETE FROM workouts WHERE id = :workoutId")
     suspend fun deleteWorkout(workoutId: Long)
 
@@ -26,6 +25,10 @@ interface WorkoutDao {
 
     @Query("DELETE FROM exercises WHERE id = :exerciseId")
     suspend fun deleteExercise(exerciseId: Int)
+
+    // FIX: Added query to get unique exercise names for autocomplete
+    @Query("SELECT DISTINCT name FROM exercises ORDER BY name ASC")
+    fun getExerciseNames(): Flow<List<String>>
 
     // --- Sets ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -50,6 +50,11 @@ class WorkoutRepositoryImpl @Inject constructor(
         }
     }
 
+    // FIX: Implemented getExerciseNames
+    fun getExerciseNames(): Flow<List<String>> {
+        return workoutDao.getExerciseNames()
+    }
+
     override suspend fun createWorkout(type: String): Int {
         val entity = WorkoutEntity(
             type = type,
@@ -60,9 +65,7 @@ class WorkoutRepositoryImpl @Inject constructor(
         return workoutDao.insertWorkout(entity).toInt()
     }
 
-    // FIX: Implemented deleteWorkout
     override suspend fun deleteWorkout(workoutId: Int) {
-        // Convert Int (Domain) to Long (Entity/DB)
         workoutDao.deleteWorkout(workoutId.toLong())
     }
 
@@ -89,9 +92,6 @@ class WorkoutRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateSet(setId: Long, reps: String, weight: Double, isCompleted: Boolean) {
-        // Ensure DAO expects Int if that's what it was defined as, or update DAO to Long.
-        // Assuming DAO uses Int for IDs based on previous context, we cast back to Int.
-        // If you updated DAO to use Long for IDs, remove .toInt().
         workoutDao.updateSet(setId.toInt(), reps, weight, isCompleted)
     }
 
