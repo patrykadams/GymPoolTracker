@@ -9,10 +9,11 @@ interface WorkoutRepository {
     fun getAllWorkouts(): Flow<List<Workout>>
     fun getWorkoutDetails(workoutId: Int): Flow<WorkoutDetails?>
 
+    // FIX: Added missing method signature
+    fun getExerciseNames(): Flow<List<String>>
+
     // Commands
     suspend fun createWorkout(type: String): Int
-
-    // FIX: Added deleteWorkout method
     suspend fun deleteWorkout(workoutId: Int)
 
     // Logging Commands

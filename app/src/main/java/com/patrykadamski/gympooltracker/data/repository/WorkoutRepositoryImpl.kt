@@ -51,7 +51,7 @@ class WorkoutRepositoryImpl @Inject constructor(
     }
 
     // FIX: Implemented getExerciseNames
-    fun getExerciseNames(): Flow<List<String>> {
+    override fun getExerciseNames(): Flow<List<String>> {
         return workoutDao.getExerciseNames()
     }
 
