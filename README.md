@@ -1,8 +1,3 @@
-Here is the professional, clean version of the README.md file without any emojis.
-
-README.md
-Markdown
-
 # GymPool Tracker
 
 A modern, clean, and efficient Android application for tracking gym workouts and swimming sessions. Built with **Kotlin**, **Jetpack Compose**, and **Clean Architecture**.
